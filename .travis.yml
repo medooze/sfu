@@ -1,3 +1,10 @@
 language: java
 jdk: oraclejdk8
 script: mvn package
+deploy:
+  provider: releases
+  api_key: "gqzkxBkLgvDg13NR5gaK"
+  file: "target/*.zip"
+  skip_cleanup: true
+  on:
+    tags: true
