@@ -55,8 +55,6 @@ make install
 #
 # Compiling SFU Media Server
 #
-
-```
 cd /usr/local/src/medooze/mcu
 make sfu
 ```
