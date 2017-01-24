@@ -16,7 +16,12 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.util.concurrent.Future;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Properties;
+import java.util.logging.Level;
 import org.apache.log4j.BasicConfigurator;
 
 import org.apache.log4j.Logger;
@@ -92,24 +97,68 @@ public class Server implements Runnable {
 	}
 
 	public static void main(String[] args) throws MalformedURLException {
-	
-		// Set up a simple configuration that logs on the console.
+		// Set up a simple log configuration that logs on the console.
 		BasicConfigurator.configure();
+		
+		//Get configuration file
+		String configFile = "sfu.conf";
+		    
+		//Load configuration
+		Properties config = new Properties();
+		
+		//Default server properties
+		Integer port = DEFAULT_PORT;
 		
 		//Default mixer properties
 		String url = "http://192.168.64.129:8080";
 		String ip = "192.168.64.129";
 		String publicIp = "192.168.64.129";
 		String subnet = "0.0.0.0/32";
+	
+		try {
+			//Load from file
+			config.load( new FileInputStream(configFile));
+			//Get mixer url
+			if (config.containsKey("mixer.url"))
+				//Set it
+				url = config.getProperty("mixer.url");
+			//Get mixer url
+			if (config.containsKey("mixer.ip"))
+				//Set it
+				ip = config.getProperty("mixer.url");
+			//Get mixer url
+			if (config.containsKey("mixer.publicIp"))
+				//Set it
+				publicIp = config.getProperty("mixer.publicIp");
+			//Get mixer url
+			if (config.containsKey("mixer.subnet"))
+				//Set it
+				subnet = config.getProperty("mixer.subnet");
+		
+			//Check domain
+			if (config.containsKey("server.port"))
+				//Get value
+				port = Integer.parseInt(config.getProperty("server.port"));
+			
+		} catch (FileNotFoundException ex) {
+			logger.warn("Configuration file not found on "+configFile+" setting defaults");
+		} catch (IOException ex) {
+			logger.error("Cannot read configuration file on "+configFile+", setting defaults", ex);
+		} catch (Exception ex) {
+			logger.error("Cannot read configuration file on "+configFile+", setting defaults", ex);
+		}
 		
 		//Create Media mixer
 		MediaMixer mixer = new MediaMixer("mixer", "mixer",url, ip, publicIp, subnet, "");
+		
+		//Log 
+		logger.info("Using media server on "+url+" with public ip:"+publicIp);
 		
 		//Start SFU
 		SFU.init(mixer);
 
 		try {
-			start(DEFAULT_PORT);
+			start(port);
 			
 			synchronized(instance)
 			{
