@@ -19,6 +19,12 @@ It is our goal to implement only the We intent to implement support the followin
 
 This is a moving target as new functionalities will be available on Chrome and some others will be removed, we will update our targets approiatelly.
 
+To enable Flex FEC and VP9 SVC on Chrome Canary you must use the following command line:
+
+```
+chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/WebRTC-FlexFEC-03/Enabled
+```
+
 #Compilation
 ## SFU controller
 ```
@@ -125,7 +131,7 @@ sfu -f
 Coming soon
 
 #Demo
-[Comming soon] (https://sfu.medooze.com)
+[Comming soon] (https://sfu.medooze.com) . You must use Chrome Canary in order to use it.
 
 
 
