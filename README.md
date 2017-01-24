@@ -60,11 +60,66 @@ make sfu
 ```
 
 # Setup
+In order to run the SFU you need to configure in the SFU controller the location and properties of the SFU Media Server, this is done in the ```sfu.conf``:
 
+```
+# Set the media server xmlrpc endpoint url 
+mixer.url = http://localhost:8080
+# Set the media server IP address
+mixer.ip = 127.0.0.1
+# Set the media server public IP address (i.e. the one facing the clients and which will be used on the SDP)
+mixer.publicIp = 169.50.169.84
+# Private subnet, in case you want to test it on a private network
+mixer.subnet = 0.0.0.0/32
+# Websocket server URL
+server.port = 8084
+```
+
+Currently the server does not support WSS transport, and while it could be supported, it is preffered to run it behind an nginx server which can server the HTML client and proxy the WSS request to the server internally:
+```
+# Add to your server section of the nginx configuration
+	location /sfu {
+                proxy_pass http://localhost:8084;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                proxy_read_timeout 3600;
+                proxy_set_header        X-Real-IP       $remote_addr;
+                proxy_set_header        Host            $host;
+                proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+                error_log  /var/log/nginx/sfu.log info;
+        }
+```
 
 # Run
+```
+#
+# SFU controller
+# Usage: sfu [<config-file>] 
+#
+java -jar sfu-x.x.x.jar 
 
+#
+# SFU media server
+#  Usage: sfu [-h] [--help] [--sfu-log logfile] [--sfu-pid pidfile] [--http-port port] [--min-rtp-port port] [--max-rtp-port port] 
+#  Options:
+#   -h,--help        Print help
+#   -f               Run as daemon in safe mode
+#   -d               Enable debug logging
+#   -dd              Enable more debug logging
+#   -g               Dump core on SEG FAULT
+#   --sfu-log        Set sfu log file path (default: sfu.log)
+#   --sfu-pid        Set sfu pid file path (default: sfu.pid)
+#   --sfu-crt        Set sfu SSL certificate file path (default: sfu.crt)
+#   --sfu-key        Set sfu SSL key file path (default: sfu.pid)
+#   --http-port      Set HTTP xmlrpc api port
+#   --http-ip        Set HTTP xmlrpc api listening interface ip
+#   --min-rtp-port   Set min rtp port
+#   --max-rtp-port   Set max rtp port
+#   --rtmp-port      Set RTMP port
 
+sfu -f
+````
 
 # Client code
 Coming soon
