@@ -5,6 +5,7 @@
  */
 package org.murillo.sfu.model;
 
+import java.util.Map;
 import org.murillo.MediaServer.Codecs;
 import org.murillo.sdp.ParserException;
 import org.murillo.sfu.ParticipantProxy;
@@ -75,6 +76,12 @@ public class Participant {
 		//Add opus codec
 		audio.addCodec(opus);
 		
+		//Add audio extensions
+		for (Map.Entry<Integer, String> extension : remote.getAudio().getExtensions().entrySet())
+			//If it is supported
+			if (MediaInfo.SupportedExtensions.contains(extension.getValue()))
+				//Add it
+				audio.addExtension(extension.getKey(), extension.getValue());
 		//Add it to answer
 		local.addMedia(audio);
 		
@@ -90,6 +97,13 @@ public class Participant {
 		//Add video codecs
 		video.addCodec(vp9);
 		video.addCodec(fec);
+		
+		//Add video extensions
+		for (Map.Entry<Integer, String> extension : remote.getVideo().getExtensions().entrySet())
+			//If it is supported
+			if (MediaInfo.SupportedExtensions.contains(extension.getValue()))
+				//Add it
+				video.addExtension(extension.getKey(), extension.getValue());
 		
 		//Add it to answer
 		local.addMedia(video);

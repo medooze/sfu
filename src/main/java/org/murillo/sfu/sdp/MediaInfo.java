@@ -6,6 +6,7 @@
 package org.murillo.sfu.sdp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -20,6 +21,15 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType()
 @XmlAccessorType(XmlAccessType.NONE)
 public class MediaInfo {
+	
+	public static List<String> SupportedExtensions = Arrays.asList(
+			"urn:ietf:params:rtp-hdrext:ssrc-audio-level",
+			"urn:ietf:params:rtp-hdrext:toffset",
+			"http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+			"urn:3gpp:video-orientation",
+			"http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+			//"http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+		);
 	@XmlElement
 	private final String type;
 	@XmlElement
