@@ -30,6 +30,8 @@ public class Room {
 	@XmlElement
 	private final ConcurrentHashMap<String,Participant> participants = new ConcurrentHashMap<>();
 	
+	private Boolean selfviews = false;
+	
 	private RoomProxy proxy;
 	private final PSNRSequence ssrcs = new PSNRSequence();
 	
@@ -57,9 +59,11 @@ public class Room {
 	public synchronized void addParticipant(Participant participant) {
 		//Get media streams from participant
 		StreamInfo stream = participant.getRemoteStream();
-		//Add it to self
-		//TODO:REMOVE!
-		participant.addLocalStream(stream);
+		
+		//If we have enabled selfviews
+		if (selfviews)
+			//Add it to self
+			participant.addLocalStream(stream);
 		//For each other
 		for (Participant other: participants.values())
 		{
@@ -99,6 +103,10 @@ public class Room {
 		for (Participant participant : participants.values())
 			//Terminate
 			participant.terminate(reason);
+	}
+
+	public Boolean getSelfviews() {
+		return selfviews;
 	}
 
 	

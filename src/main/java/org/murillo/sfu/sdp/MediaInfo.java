@@ -92,6 +92,10 @@ public class MediaInfo {
 				return info;
 		return null;
 	}
+	
+	public boolean hasCodec(String codec) {
+		return getCodec(codec)!=null;
+	}
 
 	public HashMap<Integer, CodecInfo> getCodecs() {
 		return codecs;

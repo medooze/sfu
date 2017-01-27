@@ -181,10 +181,10 @@ public class SDPInfo {
 					md.addRTPMapAttribute(codec.getType(), codec.getCodec(), 90000);
 					//Add rtcp-fb nack support
 					md.addAttribute("rtcp-fb", codec.getType()+" nack pli");
-					//Add fir
-					md.addAttribute("rtcp-fb", codec.getType()+" ccm fir");
 					//Add Remb
 					md.addAttribute("rtcp-fb", codec.getType()+" goog-remb");
+					//Add Remb
+					md.addAttribute("rtcp-fb", codec.getType()+" transport-cc");
 				}
 				//If it has rtx
 				if (codec.hasRtx())

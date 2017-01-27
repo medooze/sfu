@@ -7,12 +7,9 @@ package org.murillo.sfu;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.xmlrpc.XmlRpcException;
 import org.murillo.MediaServer.XmlSFUClient;
 import org.murillo.sdp.ParserException;
@@ -131,6 +128,11 @@ public class SFU {
 		
 		HashMap<String,String> properties = new HashMap<>();
 		
+		//Is selfview enabled?
+		if (room.getSelfviews())
+			//Append property
+			properties.put("selfview"	, "true");
+		
 		//Put data ICE data
 		properties.put("ice.localUsername"	, localICE.getUfrag());
 		properties.put("ice.localPassword"	, localICE.getPwd());
@@ -141,11 +143,15 @@ public class SFU {
 		properties.put("dtls.hash"		, remoteDTLS.getHash());
 		properties.put("dtls.fingerprint"	, remoteDTLS.getFingerprint());
 		
+		//Check if remote has fec
+		//TODO: remove support
+		boolean hasFEC = remote.getVideo().hasCodec("flexfec-03");
+		
 		//Put data RTP data
 		properties.put("rtp.audio.opus.pt"	, remote.getAudio().getCodec("opus").getType().toString());
 		properties.put("rtp.video.vp9.pt"	, remote.getVideo().getCodec("vp9").getType().toString());
 		properties.put("rtp.video.vp9.rtx"	, remote.getVideo().getCodec("vp9").getRtx().toString());
-		properties.put("rtp.video.flexfec.pt"	, remote.getVideo().getCodec("flexfec-03").getType().toString());
+		if (hasFEC) properties.put("rtp.video.flexfec.pt"	, remote.getVideo().getCodec("flexfec-03").getType().toString());
 		
 		//Add audio extensions
 		for (Map.Entry<Integer, String> extension : remote.getAudio().getExtensions().entrySet())
@@ -161,7 +167,7 @@ public class SFU {
 		properties.put("remote.audio.ssrc"	, remote.getFirstStream().getFirstTrack("audio").getSSRCs().get(0).toString());
 		properties.put("remote.video.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSSRCs().get(0).toString());
 		properties.put("remote.video.rtx.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSourceGroup("FID").getSSRCs().get(1).toString());
-		properties.put("remote.video.fec.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSourceGroup("FEC-FR").getSSRCs().get(1).toString());
+		if (hasFEC) properties.put("remote.video.fec.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSourceGroup("FEC-FR").getSSRCs().get(1).toString());
 		
 		//Create participant stream and sources
 		TrackInfo track;
@@ -178,15 +184,23 @@ public class SFU {
 		track = new TrackInfo("video", uuid+"video");
 		//Add ssrc
 		track.addSSRC(room.getNextSSRC());
-		//Get fec and rtx group
+		
+		//Get rtx group
 		SourceGroupInfo fid = new SourceGroupInfo("FID"    ,Arrays.asList(track.getSSRCs().get(0),room.getNextSSRC()));
-		SourceGroupInfo fec = new SourceGroupInfo("FEC-FR" ,Arrays.asList(track.getSSRCs().get(0),room.getNextSSRC()));
 		//Add ssrc groups
 		track.addSourceGroup(fid);
-		track.addSourceGroup(fec);
-		//Add ssrcs for rtx and fec
+		//Add ssrcs for rtx
 		track.addSSRC(fid.getSSRCs().get(1));
-		track.addSSRC(fec.getSSRCs().get(1));
+		
+		if (hasFEC) 
+		{
+			//Get rtx group
+			SourceGroupInfo fec = new SourceGroupInfo("FEC-FR" ,Arrays.asList(track.getSSRCs().get(0),room.getNextSSRC()));
+			//Add ssrc groups
+			track.addSourceGroup(fec);
+			//Add ssrcs for fec
+			track.addSSRC(fec.getSSRCs().get(1));
+		}
 		//Add track
 		stream.addTrack(track);
 		
@@ -196,8 +210,8 @@ public class SFU {
 		properties.put("local.id"		, stream.getId());
 		properties.put("local.audio.ssrc"	, stream.getFirstTrack("audio").getSSRCs().get(0).toString());
 		properties.put("local.video.ssrc"	, stream.getFirstTrack("video").getSSRCs().get(0).toString());
-		properties.put("local.video.fec.ssrc"	, room.getNextSSRC().toString());
-		properties.put("local.video.fec.ssrc"	, room.getNextSSRC().toString());
+		properties.put("local.video.rtx.ssrc"	, room.getNextSSRC().toString());
+		if (hasFEC) properties.put("local.video.fec.ssrc"	, room.getNextSSRC().toString());
 		
 		//Crete participant on the media server
 		ParticipantProxy participantProxy = proxy.addParticipant(uuid, properties);

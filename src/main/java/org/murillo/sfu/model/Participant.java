@@ -96,7 +96,8 @@ public class Participant {
 		CodecInfo fec = remote.getVideo().getCodec("flexfec-03");
 		//Add video codecs
 		video.addCodec(vp9);
-		video.addCodec(fec);
+		if (fec!=null)
+			video.addCodec(fec);
 		
 		//Add video extensions
 		for (Map.Entry<Integer, String> extension : remote.getVideo().getExtensions().entrySet())
