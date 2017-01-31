@@ -9,7 +9,7 @@ Due to the experimental nature of this functionalities we will only officially s
 #Goal
 It is our goal to implement only the We intent to implement support the following features:
 
-- [VP9 SVC as per support](https://tools.ietf.org/html/draft-ietf-payload-vp9-02)
+- [VP9 SVC](https://tools.ietf.org/html/draft-ietf-payload-vp9-02)
 - [RTP transport wide congestion control](https://tools.ietf.org/html/draft-holmer-rmcat-transport-wide-cc-extensions-01)
 - Sender side BitRate estimation: algorithm not decided yet candidates are [GCC](https://tools.ietf.org/html/draft-ietf-rmcat-gcc-02), [NADA])(https://tools.ietf.org/html/draft-ietf-rmcat-nada-03) or [SCREAM](https://tools.ietf.org/html/draft-ietf-rmcat-scream-cc-07)
 - [Flex FEC draft 3](https://tools.ietf.org/html/draft-ietf-payload-flexible-fec-scheme-03)
