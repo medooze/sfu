@@ -98,6 +98,8 @@ public class Participant {
 		video.addCodec(vp9);
 		if (fec!=null)
 			video.addCodec(fec);
+		//Limit incoming bitrate
+		video.setBitrate(1024);
 		
 		//Add video extensions
 		for (Map.Entry<Integer, String> extension : remote.getVideo().getExtensions().entrySet())

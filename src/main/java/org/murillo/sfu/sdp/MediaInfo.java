@@ -44,6 +44,8 @@ public class MediaInfo {
 	private HashMap<Integer,CodecInfo> codecs = new HashMap<>();
 	@XmlElement
 	private ArrayList<CandidateInfo> candidates = new ArrayList<>();
+	@XmlElement
+	private Integer bitrate = 0;
 	
 	public MediaInfo(String id, String type) {
 		this.id = id;
@@ -111,6 +113,14 @@ public class MediaInfo {
 
 	public HashMap<Integer, String> getExtensions() {
 		return extensions;
+	}
+
+	public Integer getBitrate() {
+		return bitrate;
+	}
+
+	public void setBitrate(Integer bitrate) {
+		this.bitrate = bitrate;
 	}
 	
 	

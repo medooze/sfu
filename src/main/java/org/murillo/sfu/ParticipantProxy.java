@@ -30,6 +30,15 @@ public class ParticipantProxy {
 	public Integer getPartId() {
 		return partId;
 	}
+	
+	//TODO: REMOVE!!
+	void SelectLayer( Integer spatialLayerId, Integer temporalLayerId) {
+		try{
+			client.ParticipantSelectLayer(roomId,partId,spatialLayerId,temporalLayerId);
+		} catch(Exception e) {
+			
+		}
+	}
 
 	void destroy() throws XmlRpcException {
 		//REmove this participant from room

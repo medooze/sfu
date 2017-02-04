@@ -30,7 +30,7 @@ public class Room {
 	@XmlElement
 	private final ConcurrentHashMap<String,Participant> participants = new ConcurrentHashMap<>();
 	
-	private Boolean selfviews = false;
+	private Boolean selfviews = true;
 	
 	private RoomProxy proxy;
 	private final PSNRSequence ssrcs = new PSNRSequence();
@@ -108,6 +108,11 @@ public class Room {
 	public Boolean getSelfviews() {
 		return selfviews;
 	}
+
+	public void setSelfViews(Boolean selfviews) {
+		this.selfviews = selfviews;
+	}
+	
 
 	
 }

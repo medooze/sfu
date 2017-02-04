@@ -18,6 +18,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import org.murillo.MediaServer.Codecs;
 import org.murillo.sdp.Attribute;
+import org.murillo.sdp.Bandwidth;
 import org.murillo.sdp.ExtMapAttribute;
 import org.murillo.sdp.FingerprintAttribute;
 import org.murillo.sdp.MediaDescription;
@@ -148,6 +149,11 @@ public class SDPInfo {
 			md.addAttribute("mid",media.getId());
 			//Add to bundle
 			bundle.addTag(media.getId());
+			
+			//If present
+			if (media.getBitrate()>0)
+				//Add attribute
+				md.addBandwidth(new Bandwidth("AS",media.getBitrate()));
 
 			//For each candidate
 			for (CandidateInfo candidate : media.getCandidates())

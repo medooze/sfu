@@ -21,7 +21,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Properties;
-import java.util.logging.Level;
 import org.apache.log4j.BasicConfigurator;
 
 import org.apache.log4j.Logger;

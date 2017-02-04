@@ -74,8 +74,18 @@ public class Session {
 		String messageId = json.getString("messageId");
 
 		logger.info("Websocket cmd " + command);
+		
+		//TODO: REMOVE!!!
+		if ("SELECT_LAYER".equalsIgnoreCase(command))
+		{
+			//Get attributes
+			Integer spatialLayerId = json.getInt("spatialLayerId");
+			Integer temporalLayerId = json.getInt("temporalLayerId");
+			participant.getProxy().SelectLayer(spatialLayerId, temporalLayerId);
+			
+		}
 		// Check commands
-		if (CommandType.CREATE_ROOM_CMD.is(command) )
+		else if (CommandType.CREATE_ROOM_CMD.is(command) )
 		{
 			
 			try {
@@ -85,6 +95,9 @@ public class Session {
 			
 				//Create client
 				Room room = SFU.createRoom(roomId,title);
+				
+				//Set self views
+				room.setSelfViews(json.optBoolean("selfviews",false));
 
 				//Send back result
 				send(new CreateRoomResult(messageId,room));
