@@ -65,51 +65,65 @@ public class Participant {
 		//Create local SDP info
 		local = new SDPInfo();
 		
-		//Create audio media
-		MediaInfo audio = new MediaInfo("audio", "audio");
-		//Add ice and dtls info
-		audio.setDTLS(dtls);
-		audio.setICE(info);
-		audio.addCandidate(candidate);
-		//Get codec type
-		CodecInfo opus = remote.getAudio().getCodec("Opus");
-		//Add opus codec
-		audio.addCodec(opus);
+		//Get remote audio m-line info 
+		MediaInfo audioOffer = remote.getAudio();
 		
-		//Add audio extensions
-		for (Map.Entry<Integer, String> extension : remote.getAudio().getExtensions().entrySet())
-			//If it is supported
-			if (MediaInfo.SupportedExtensions.contains(extension.getValue()))
-				//Add it
-				audio.addExtension(extension.getKey(), extension.getValue());
-		//Add it to answer
-		local.addMedia(audio);
+		//If we have audio
+		if (audioOffer!=null)
+		{
+			//Create audio media
+			MediaInfo audio = new MediaInfo("audio", "audio");
+			//Add ice and dtls info
+			audio.setDTLS(dtls);
+			audio.setICE(info);
+			audio.addCandidate(candidate);
+			//Get codec type
+			CodecInfo opus = audioOffer.getCodec("Opus");
+			//Add opus codec
+			audio.addCodec(opus);
+
+			//Add audio extensions
+			for (Map.Entry<Integer, String> extension : audioOffer.getExtensions().entrySet())
+				//If it is supported
+				if (MediaInfo.SupportedExtensions.contains(extension.getValue()))
+					//Add it
+					audio.addExtension(extension.getKey(), extension.getValue());
+			//Add it to answer
+			local.addMedia(audio);
+		}
 		
-		//Create video media
-		MediaInfo video = new MediaInfo("video", "video");
-		//Add ice and dtls info
-		video.setDTLS(dtls);
-		video.setICE(info);
-		video.addCandidate(candidate);
-		//Get codec types
-		CodecInfo vp9 = remote.getVideo().getCodec("vp9");
-		CodecInfo fec = remote.getVideo().getCodec("flexfec-03");
-		//Add video codecs
-		video.addCodec(vp9);
-		if (fec!=null)
-			video.addCodec(fec);
-		//Limit incoming bitrate
-		video.setBitrate(1024);
+		//Get remote video m-line info 
+		MediaInfo videoOffer = remote.getVideo();
 		
-		//Add video extensions
-		for (Map.Entry<Integer, String> extension : remote.getVideo().getExtensions().entrySet())
-			//If it is supported
-			if (MediaInfo.SupportedExtensions.contains(extension.getValue()))
-				//Add it
-				video.addExtension(extension.getKey(), extension.getValue());
-		
-		//Add it to answer
-		local.addMedia(video);
+		//If offer had video
+		if (videoOffer!=null)
+		{
+			//Create video media
+			MediaInfo video = new MediaInfo("video", "video");
+			//Add ice and dtls info
+			video.setDTLS(dtls);
+			video.setICE(info);
+			video.addCandidate(candidate);
+			//Get codec types
+			CodecInfo vp9 = videoOffer.getCodec("vp9");
+			CodecInfo fec = videoOffer.getCodec("flexfec-03");
+			//Add video codecs
+			video.addCodec(vp9);
+			if (fec!=null)
+				video.addCodec(fec);
+			//Limit incoming bitrate
+			video.setBitrate(1024);
+
+			//Add video extensions
+			for (Map.Entry<Integer, String> extension : videoOffer.getExtensions().entrySet())
+				//If it is supported
+				if (MediaInfo.SupportedExtensions.contains(extension.getValue()))
+					//Add it
+					video.addExtension(extension.getKey(), extension.getValue());
+
+			//Add it to answer
+			local.addMedia(video);
+		}
 		
 		return local;
 	}

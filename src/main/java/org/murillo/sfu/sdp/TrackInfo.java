@@ -63,4 +63,11 @@ public  class TrackInfo {
 	public List<SourceGroupInfo> getSourceGroups() {
 		return groups;
 	}
+
+	public boolean hasSourceGroup(String schematics) {
+		for (SourceGroupInfo group : groups)
+			if (group.getSemantics().equalsIgnoreCase(schematics))
+				return true;
+		return false;
+	}
 }

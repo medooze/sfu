@@ -20,6 +20,7 @@ import org.murillo.sfu.model.Participant;
 import org.murillo.sfu.sdp.CandidateInfo;
 import org.murillo.sfu.sdp.DTLSInfo;
 import org.murillo.sfu.sdp.ICEInfo;
+import org.murillo.sfu.sdp.MediaInfo;
 import org.murillo.sfu.sdp.SDPInfo;
 import org.murillo.sfu.sdp.SourceGroupInfo;
 import org.murillo.sfu.sdp.StreamInfo;
@@ -114,12 +115,18 @@ public class SFU {
 		
 		//Process offer
 		SDPInfo remote = participant.processOffer(offer);
-		//Get remote info
-		DTLSInfo remoteDTLS = remote.getAudio().getDTLS();
-		ICEInfo remoteIce = remote.getAudio().getICE();
 		
-		//Set dtls and ice info
+		//Get remote info from first media
+		MediaInfo first = remote.getMedias().iterator().next();
+		
+		//Get DTLS and ICE info
+		DTLSInfo remoteDTLS = first .getDTLS();
+		ICEInfo remoteIce = first.getICE();
+		
+		//Create local DTLS info
 		DTLSInfo localDTLS = new DTLSInfo( remoteDTLS.getSetup().reverse(), proxy.getHash(), proxy.getFingerprint());
+		
+		//Generate local ice credentias and candidate
 		ICEInfo localICE = ICEInfo.Generate();
 		CandidateInfo localCandidate = new CandidateInfo("1", 1, "UDP", 33554432-1, proxy.getIp(), proxy.getPort(), "host");
 		
@@ -143,76 +150,127 @@ public class SFU {
 		properties.put("dtls.hash"		, remoteDTLS.getHash());
 		properties.put("dtls.fingerprint"	, remoteDTLS.getFingerprint());
 		
-		//Check if remote has fec
-		//TODO: remove support
-		boolean hasFEC = remote.getVideo().hasCodec("flexfec-03");
+		//Get audio info
+		MediaInfo audio = remote.getAudio();
+		    
+		//If it has audio
+		if (audio!=null)
+		{
+			//Signal it
+			properties.put("rtp.audio","true");
+			//Put data RTP data
+			properties.put("rtp.audio.opus.pt", audio.getCodec("opus").getType().toString());
+			//Add audio extensions
+			for (Map.Entry<Integer, String> extension : audio.getExtensions().entrySet())
+				//Add it
+				properties.put("rtp.ext."+extension.getValue()	, extension.getKey().toString());
+		}
 		
-		//Put data RTP data
-		properties.put("rtp.audio.opus.pt"	, remote.getAudio().getCodec("opus").getType().toString());
-		properties.put("rtp.video.vp9.pt"	, remote.getVideo().getCodec("vp9").getType().toString());
-		properties.put("rtp.video.vp9.rtx"	, remote.getVideo().getCodec("vp9").getRtx().toString());
-		if (hasFEC) properties.put("rtp.video.flexfec.pt"	, remote.getVideo().getCodec("flexfec-03").getType().toString());
+		//Get video info
+		MediaInfo video = remote.getVideo();
 		
-		//Add audio extensions
-		for (Map.Entry<Integer, String> extension : remote.getAudio().getExtensions().entrySet())
-			//Add it
-			properties.put("rtp.ext."+extension.getValue()	, extension.getKey().toString());
-		//Add video extensions
-		for (Map.Entry<Integer, String> extension : remote.getVideo().getExtensions().entrySet())
-			//Add it
-			properties.put("rtp.ext."+extension.getValue()	, extension.getKey().toString());
+		//If if has video
+		if (video!=null)
+		{
+			//Signal it
+			properties.put("rtp.video","true");
+			//Put data RTP data
+			properties.put("rtp.video.vp9.pt" , video.getCodec("vp9").getType().toString());
+			properties.put("rtp.video.vp9.rtx", video.getCodec("vp9").getRtx().toString());
+			//If flex fec is enabled
+			if (video.hasCodec("flexfec-03")) 
+				//Add RTP data for flex
+				properties.put("rtp.video.flexfec.pt", video.getCodec("flexfec-03").getType().toString());
+			//Add video extensions
+			for (Map.Entry<Integer, String> extension : video.getExtensions().entrySet())
+				//Add it
+				properties.put("rtp.ext."+extension.getValue()	, extension.getKey().toString());
+		}
+		//Get streasm propetries
+		StreamInfo remoteStream = remote.getFirstStream();
 		
 		//Incoming Stream data
-		properties.put("remote.id"		, remote.getFirstStream().getId());
-		properties.put("remote.audio.ssrc"	, remote.getFirstStream().getFirstTrack("audio").getSSRCs().get(0).toString());
-		properties.put("remote.video.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSSRCs().get(0).toString());
-		properties.put("remote.video.rtx.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSourceGroup("FID").getSSRCs().get(1).toString());
-		if (hasFEC) properties.put("remote.video.fec.ssrc"	, remote.getFirstStream().getFirstTrack("video").getSourceGroup("FEC-FR").getSSRCs().get(1).toString());
+		properties.put("remote.id", remoteStream.getId());
+		
+		//Get remote audio track
+		TrackInfo remoteAudioTrack = remoteStream.getFirstTrack("audio");
+		
+		//If it is there
+		if (remoteAudioTrack!=null)
+			//Add ssrc
+			properties.put("remote.audio.ssrc" , remoteAudioTrack.getSSRCs().get(0).toString());
+		
+		//Get remote audio track
+		TrackInfo remoteVideoTrack = remoteStream.getFirstTrack("video");
+		    
+		//IF we hav it
+		if (remoteVideoTrack!=null)
+		{
+			//If we have video track
+			properties.put("remote.video.ssrc" , remoteVideoTrack.getSSRCs().get(0).toString());
+			//Ensure we have RTX info
+			if (remoteVideoTrack.hasSourceGroup("FID"))
+				//Put RTX ssrc
+				properties.put("remote.video.rtx.ssrc"	, remoteVideoTrack.getSourceGroup("FID").getSSRCs().get(1).toString());
+			//Ensure we have Flex FEC info
+			if (remoteVideoTrack.hasSourceGroup("FEC-FR"))
+				//Put Fec ssrc
+				properties.put("remote.video.fec.ssrc"	, remoteVideoTrack.getSourceGroup("FEC-FR").getSSRCs().get(1).toString());
+		}
 		
 		//Create participant stream and sources
-		TrackInfo track;
 		StreamInfo stream = new StreamInfo(uuid);
 		
-		//Create new track for audio
-		track = new TrackInfo("audio", uuid+"-audio");
-		//Add ssrc
-		track.addSSRC(room.getNextSSRC());
-		//Add track
-		stream.addTrack(track);
+		//Put stream info
+		properties.put("local.id", stream.getId());
 		
-		//Create new track for audio
-		track = new TrackInfo("video", uuid+"video");
-		//Add ssrc
-		track.addSSRC(room.getNextSSRC());
-		
-		//Get rtx group
-		SourceGroupInfo fid = new SourceGroupInfo("FID"    ,Arrays.asList(track.getSSRCs().get(0),room.getNextSSRC()));
-		//Add ssrc groups
-		track.addSourceGroup(fid);
-		//Add ssrcs for rtx
-		track.addSSRC(fid.getSSRCs().get(1));
-		
-		if (hasFEC) 
+		//IF offer had audio
+		if (audio!=null)
 		{
+			//Create new track for audio
+			TrackInfo track = new TrackInfo("audio", uuid+"-audio");
+			//Add ssrc
+			track.addSSRC(room.getNextSSRC());
+			//Add track
+			stream.addTrack(track);
+			
+			//Put stream properties
+			properties.put("local.audio.ssrc", stream.getFirstTrack("audio").getSSRCs().get(0).toString());
+		}
+		
+		//IF offer had video
+		if (video!=null)
+		{
+			//Create new track for audio
+			TrackInfo track = new TrackInfo("video", uuid+"video");
+			//Add ssrc
+			track.addSSRC(room.getNextSSRC());
+
 			//Get rtx group
-			SourceGroupInfo fec = new SourceGroupInfo("FEC-FR" ,Arrays.asList(track.getSSRCs().get(0),room.getNextSSRC()));
+			SourceGroupInfo fid = new SourceGroupInfo("FID", Arrays.asList(track.getSSRCs().get(0), room.getNextSSRC()));
+			//Add ssrc groups
+			track.addSourceGroup(fid);
+			//Add ssrcs for rtx
+			track.addSSRC(fid.getSSRCs().get(1));
+
+			//Get rtx group
+			SourceGroupInfo fec = new SourceGroupInfo("FEC-FR", Arrays.asList(track.getSSRCs().get(0), room.getNextSSRC()));
 			//Add ssrc groups
 			track.addSourceGroup(fec);
 			//Add ssrcs for fec
 			track.addSSRC(fec.getSSRCs().get(1));
+			//Add track
+			stream.addTrack(track);
+			
+			//Put stream properties
+			properties.put("local.video.ssrc"	, stream.getFirstTrack("video").getSSRCs().get(0).toString());
+			properties.put("local.video.rtx.ssrc"	, room.getNextSSRC().toString());
+			properties.put("local.video.fec.ssrc"	, room.getNextSSRC().toString());
 		}
-		//Add track
-		stream.addTrack(track);
 		
 		//Set it on participant
 		participant.setStreamInfo(stream);
 				
-		properties.put("local.id"		, stream.getId());
-		properties.put("local.audio.ssrc"	, stream.getFirstTrack("audio").getSSRCs().get(0).toString());
-		properties.put("local.video.ssrc"	, stream.getFirstTrack("video").getSSRCs().get(0).toString());
-		properties.put("local.video.rtx.ssrc"	, room.getNextSSRC().toString());
-		if (hasFEC) properties.put("local.video.fec.ssrc"	, room.getNextSSRC().toString());
-		
 		//Crete participant on the media server
 		ParticipantProxy participantProxy = proxy.addParticipant(uuid, properties);
 		
