@@ -133,6 +133,9 @@ Coming soon
 #Demo
 [https://sfu.medooze.com] (https://sfu.medooze.com) . You must use Chrome in order to use it.
 
+#SVC layer selection demo
+[https://sfu.medooze.com/svc] (https://sfu.medooze.com/svc) . You must use Chrome in order to use it.
+
 
 
 
