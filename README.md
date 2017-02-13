@@ -33,10 +33,10 @@ maven package
 You can get the latest binaries on the release section
 
 ## SFU Media Server
+The media server code has been moved to : https://github.com/medooze/media-server
 ```
 cd /usr/local/src
 git clone https://github.com/cisco/libsrtp
-svn checkout svn://svn.code.sf.net/p/mcumediaserver/code/trunk medooze
 wget http://downloads.sourceforge.net/project/xmlrpc-c/Xmlrpc-c%20Super%20Stable/1.16.35/xmlrpc-c-1.16.35.tgz
 tar xvzf xmlrpc-c-1.16.35.tgz
 
@@ -61,7 +61,7 @@ make install
 #
 # Compiling SFU Media Server
 #
-cd /usr/local/src/medooze/mcu
+cd /usr/local/src/media-server
 make sfu
 ```
 
@@ -132,6 +132,9 @@ Coming soon
 
 #Demo
 [https://sfu.medooze.com] (https://sfu.medooze.com) . You must use Chrome in order to use it.
+
+#SVC layer selection demo
+[https://sfu.medooze.com/svc] (https://sfu.medooze.com/svc) . You must use Chrome in order to use it.
 
 
 
