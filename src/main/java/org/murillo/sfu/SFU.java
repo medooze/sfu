@@ -264,8 +264,8 @@ public class SFU {
 			
 			//Put stream properties
 			properties.put("local.video.ssrc"	, stream.getFirstTrack("video").getSSRCs().get(0).toString());
-			properties.put("local.video.rtx.ssrc"	, room.getNextSSRC().toString());
-			properties.put("local.video.fec.ssrc"	, room.getNextSSRC().toString());
+			properties.put("local.video.rtx.ssrc"	, fid.getSSRCs().get(1).toString());
+			properties.put("local.video.fec.ssrc"	, fec.getSSRCs().get(1).toString());
 		}
 		
 		//Set it on participant
