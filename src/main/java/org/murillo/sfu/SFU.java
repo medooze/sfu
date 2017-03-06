@@ -121,17 +121,17 @@ public class SFU {
 		
 		//Get DTLS and ICE info
 		DTLSInfo remoteDTLS = first .getDTLS();
-		ICEInfo remoteIce = first.getICE();
+		ICEInfo remoteICE = first.getICE();
 		
 		//Create local DTLS info
 		DTLSInfo localDTLS = new DTLSInfo( remoteDTLS.getSetup().reverse(), proxy.getHash(), proxy.getFingerprint());
 		
 		//Generate local ice credentias and candidate
-		ICEInfo localICE = ICEInfo.Generate();
+		ICEInfo localICE = ICEInfo.generate();
 		CandidateInfo localCandidate = new CandidateInfo("1", 1, "UDP", 33554432-1, proxy.getIp(), proxy.getPort(), "host");
 		
 		//Create answer
-		participant.createAnswer(localDTLS, localICE,localCandidate);
+		SDPInfo local = participant.createAnswer(localDTLS, localICE,localCandidate);
 		
 		HashMap<String,String> properties = new HashMap<>();
 		
@@ -143,49 +143,137 @@ public class SFU {
 		//Put data ICE data
 		properties.put("ice.localUsername"	, localICE.getUfrag());
 		properties.put("ice.localPassword"	, localICE.getPwd());
-		properties.put("ice.remoteUsername"	, remoteIce.getUfrag());
-		properties.put("ice.remotePassword"	, remoteIce.getPwd());
+		properties.put("ice.remoteUsername"	, remoteICE.getUfrag());
+		properties.put("ice.remotePassword"	, remoteICE.getPwd());
 		//Put data DTLS data
 		properties.put("dtls.setup"		, remoteDTLS.getSetup().name());
 		properties.put("dtls.hash"		, remoteDTLS.getHash());
 		properties.put("dtls.fingerprint"	, remoteDTLS.getFingerprint());
 		
-		//Get audio info
-		MediaInfo audio = remote.getAudio();
+		
+		//Get remote audio info
+		MediaInfo remoteAudio = remote.getAudio();
 		    
 		//If it has audio
-		if (audio!=null)
+		if (remoteAudio!=null)
 		{
-			//Signal it
-			properties.put("rtp.audio","true");
 			//Put data RTP data
-			properties.put("rtp.audio.opus.pt", audio.getCodec("opus").getType().toString());
+			properties.put("rtp.remote.audio.codecs.length"		, "1");
+			properties.put("rtp.remote.audio.codecs.0.codec"	, "opus");
+			properties.put("rtp.remote.audio.codecs.0.pt"	, remoteAudio.getCodec("opus").getType().toString());
+			
 			//Add audio extensions
-			for (Map.Entry<Integer, String> extension : audio.getExtensions().entrySet())
+			Integer i = 0;
+			for (Map.Entry<Integer, String> extension : remoteAudio.getExtensions().entrySet())
+			{
 				//Add it
-				properties.put("rtp.ext."+extension.getValue()	, extension.getKey().toString());
+				properties.put("rtp.remote.audio.ext."+i+".id"	, extension.getKey().toString());
+				properties.put("rtp.remote.audio.ext."+i+".uri"	, extension.getValue());
+			}
+			//PUt extensions length
+			properties.put("rtp.remote.audio.ext.length"	, i.toString());
+		}
+		
+		//Get remote audio info
+		MediaInfo localAudio = local.getAudio();
+		    
+		//If it has audio
+		if (localAudio!=null)
+		{
+			//Put data RTP data
+			properties.put("rtp.remote.audio.codecs.length"		, "1");
+			properties.put("rtp.remote.audio.codecs.0.codec"	, "opus");
+			properties.put("rtp.remote.audio.codecs.0.pt"	, localAudio.getCodec("opus").getType().toString());
+			
+			//Add audio extensions
+			Integer i = 0;
+			for (Map.Entry<Integer, String> extension : localAudio.getExtensions().entrySet())
+			{
+				//Add it
+				properties.put("rtp.remote.audio.ext."+i+".id"	, extension.getKey().toString());
+				properties.put("rtp.remote.audio.ext."+i+".uri"	, extension.getValue());
+			}
+			//PUt extensions length
+			properties.put("rtp.remote.audio.ext.length"	, i.toString());
+		}
+		
+		
+		//Get video info
+		MediaInfo remoteVideo = remote.getVideo();
+		
+		//If if has video
+		if (remoteVideo!=null)
+		{
+			Integer i = 1;
+			//Put data RTP data
+			properties.put("rtp.remote.video.codecs.0.codec"	, "vp9");
+			properties.put("rtp.remote.video.codecs.0.pt"	, remoteVideo.getCodec("vp9").getType().toString());
+			properties.put("rtp.remote.video.codecs.0.rtx"	, remoteVideo.getCodec("vp9").getRtx().toString());
+			//If flex fec is enabled
+			if (remoteVideo.hasCodec("flexfec-03")) 
+			{
+				//Put data RTP data
+				properties.put("rtp.remote.video.codecs.1.codec"	, "flexfec-03");
+				properties.put("rtp.remote.video.codecs.1.pt"	, remoteVideo.getCodec("flexfec-03").getType().toString());
+				//Add codecs
+				i++;
+			}
+			
+			//Add length
+			properties.put("rtp.remote.video.codecs.length"		, i.toString());
+			
+			//Add video extensions
+			i = 0;
+			for (Map.Entry<Integer, String> extension : remoteVideo.getExtensions().entrySet())
+			{
+				//Add it
+				properties.put("rtp.remote.video.ext."+i+".id"	, extension.getKey().toString());
+				properties.put("rtp.remote.video.ext."+i+".uri"	, extension.getValue());
+				//Add extensions
+				i++;;
+			}
+			//PUt extensions length
+			properties.put("rtp.remote.video.ext.length"	, i.toString());
 		}
 		
 		//Get video info
-		MediaInfo video = remote.getVideo();
+		MediaInfo localVideo = local.getVideo();
 		
 		//If if has video
-		if (video!=null)
+		if (localVideo!=null)
 		{
-			//Signal it
-			properties.put("rtp.video","true");
+			Integer i = 1;
 			//Put data RTP data
-			properties.put("rtp.video.vp9.pt" , video.getCodec("vp9").getType().toString());
-			properties.put("rtp.video.vp9.rtx", video.getCodec("vp9").getRtx().toString());
+			properties.put("rtp.local.video.codecs.0.codec"		, "vp9");
+			properties.put("rtp.local.video.codecs.0.pt"	, localVideo.getCodec("vp9").getType().toString());
+			properties.put("rtp.local.video.codecs.0.rtx"	, localVideo.getCodec("vp9").getRtx().toString());
 			//If flex fec is enabled
-			if (video.hasCodec("flexfec-03")) 
-				//Add RTP data for flex
-				properties.put("rtp.video.flexfec.pt", video.getCodec("flexfec-03").getType().toString());
+			if (localVideo.hasCodec("flexfec-03")) 
+			{
+				//Put data RTP data
+				properties.put("rtp.local.video.codecs.1.codec"		, "flexfec-03");
+				properties.put("rtp.local.video.codecs.1.pt"	, localVideo.getCodec("flexfec-03").getType().toString());
+				//Add codecs
+				i++;
+			}
+			
+			//Add length
+			properties.put("rtp.local.video.codecs.length"		, i.toString());
+			
 			//Add video extensions
-			for (Map.Entry<Integer, String> extension : video.getExtensions().entrySet())
+			i = 0;
+			for (Map.Entry<Integer, String> extension : localVideo.getExtensions().entrySet())
+			{
 				//Add it
-				properties.put("rtp.ext."+extension.getValue()	, extension.getKey().toString());
+				properties.put("rtp.local.video.ext."+i+".id"	, extension.getKey().toString());
+				properties.put("rtp.local.video.ext."+i+".uri"	, extension.getValue());
+				//Add extensions
+				i++;;
+			}
+			//PUt extensions length
+			properties.put("rtp.local.video.ext.length"	, i.toString());
 		}
+		
 		//Get streasm propetries
 		StreamInfo remoteStream = remote.getFirstStream();
 		
@@ -225,7 +313,7 @@ public class SFU {
 		properties.put("local.id", stream.getId());
 		
 		//IF offer had audio
-		if (audio!=null)
+		if (remoteAudio!=null)
 		{
 			//Create new track for audio
 			TrackInfo track = new TrackInfo("audio", uuid+"-audio");
@@ -235,11 +323,12 @@ public class SFU {
 			stream.addTrack(track);
 			
 			//Put stream properties
+			properties.put("local.audio","true");
 			properties.put("local.audio.ssrc", stream.getFirstTrack("audio").getSSRCs().get(0).toString());
 		}
 		
 		//IF offer had video
-		if (video!=null)
+		if (remoteVideo!=null)
 		{
 			//Create new track for audio
 			TrackInfo track = new TrackInfo("video", uuid+"video");

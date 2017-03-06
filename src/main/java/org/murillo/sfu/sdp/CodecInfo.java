@@ -33,7 +33,7 @@ public class CodecInfo {
 		this.params = params;
 	}
 
-	void setRTX(Integer rtx) {
+	public void setRTX(Integer rtx) {
 		this.rtx = rtx;
 	}
 

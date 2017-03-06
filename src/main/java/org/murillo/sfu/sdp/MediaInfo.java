@@ -84,7 +84,7 @@ public class MediaInfo {
 		codecs.put(codecInfo.getType(), codecInfo);
 	}
 
-	public CodecInfo getCodec(Integer type) {
+	public CodecInfo getCodecForType(Integer type) {
 		return codecs.get(type);
 	}
 	

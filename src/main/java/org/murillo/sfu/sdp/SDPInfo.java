@@ -42,11 +42,11 @@ public class SDPInfo {
 	@XmlElement
 	private ArrayList<MediaInfo> medias = new ArrayList<>();
 	@XmlElement
-	private Integer version = 1;
+	private Long version = 1L;
 	private MediaInfo audio;
 	private MediaInfo video;
 	
-	public void setVersion(Integer version) {
+	public void setVersion(Long version) {
 		this.version = version;
 	}
 	
@@ -74,7 +74,7 @@ public class SDPInfo {
 		return medias;
 	}
 	
-	public Integer getVersion() {
+	public Long getVersion() {
 		return version;
 	}
 
@@ -108,12 +108,10 @@ public class SDPInfo {
 	public String toString(){
 		SessionDescription sdp = new SessionDescription();
 		
-		String ip = "127.0.0.1";
-		
 		//Set version
-		sdp.setVersion(version);
+		sdp.setVersion(0);
 		//Set origin
-		sdp.setOrigin("-", 1L, new Date().getTime(), "IN", "IP4", "127.0.0.1");
+		sdp.setOrigin("-", 1L, version, "IN", "IP4", "127.0.0.1");
 		//Set name
 		sdp.setSessionName("MediaMixerSession");
 		//Set connection info
@@ -177,21 +175,30 @@ public class SDPInfo {
 				//Append tyè
 				md.addFormat(codec.getType());
 
-				
-				if ("opus".equalsIgnoreCase(codec.getCodec()))
+				//Only for video
+				if ("video".equalsIgnoreCase(media.getType()))
 				{
 					//Add rtmpmap
-					md.addRTPMapAttribute(codec.getType(), codec.getCodec(), 48000, "2");
-				} else {
-					//Add rtmpmap
 					md.addRTPMapAttribute(codec.getType(), codec.getCodec(), 90000);
-					//Add rtcp-fb nack support
-					md.addAttribute("rtcp-fb", codec.getType()+" nack pli");
-					//Add Remb
-					md.addAttribute("rtcp-fb", codec.getType()+" goog-remb");
-					//Add Remb
-					md.addAttribute("rtcp-fb", codec.getType()+" transport-cc");
+					//If it is not rtx of felx fec
+					if (!"rtx".equalsIgnoreCase(codec.getCodec()) && !"flex-fec".equalsIgnoreCase(codec.getCodec()))
+					{
+						//Add rtcp-fb nack support
+						md.addAttribute("rtcp-fb", codec.getType()+" nack pli");
+						//Add Remb
+						md.addAttribute("rtcp-fb", codec.getType()+" goog-remb");
+					}
+				} else {
+					if ("opus".equalsIgnoreCase(codec.getCodec()))
+						//Add rtmpmap
+						md.addRTPMapAttribute(codec.getType(), codec.getCodec(), 48000, "2");
+					else
+						//Add rtmpmap
+						md.addRTPMapAttribute(codec.getType(), codec.getCodec(), 8000);
 				}
+				//Add Remb
+				md.addAttribute("rtcp-fb", codec.getType()+" transport-cc");
+
 				//If it has rtx
 				if (codec.hasRtx())
 				{
@@ -257,7 +264,7 @@ public class SDPInfo {
 		SDPInfo sdpInfo = new SDPInfo();
 		
 		//Set version
-		sdpInfo.setVersion(sdp.getVersion());
+		sdpInfo.setVersion(sdp.getOrigin().getSessVersion());
 		
 		//For each media description
 		for (MediaDescription md : sdp.getMedias())
@@ -362,7 +369,7 @@ public class SDPInfo {
 			for (Map.Entry<Integer, Integer> apt : apts.entrySet())
 			{
 				//Get codec
-				CodecInfo codecInfo = mediaInfo.getCodec(apt.getKey());
+				CodecInfo codecInfo = mediaInfo.getCodecForType(apt.getKey());
 				//IF it was not red
 				if (codecInfo!=null)
 					//Set rtx codec
@@ -418,7 +425,7 @@ public class SDPInfo {
 						String trackId  = ids[1];
 						//Set ids
 						source.setStreamId(streamId);
-						source.setTrakcId(trackId);
+						source.setTrackId(trackId);
 						//Get stream
 						StreamInfo stream = sdpInfo.getStream(streamId);
 						//Check if the media stream exists
@@ -462,7 +469,7 @@ public class SDPInfo {
 					//Add group to track
 					sdpInfo
 					    .getStream(source.getStreamId())
-					    .getTrack(source.getTrakcId())
+					    .getTrack(source.getTrackId())
 					    .addSourceGroup(group);
 				}
 			}

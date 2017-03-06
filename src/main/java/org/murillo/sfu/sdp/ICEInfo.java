@@ -16,7 +16,7 @@ public class ICEInfo
 	@XmlElement
 	String pwd;
 
-	public static ICEInfo Generate()
+	public static ICEInfo generate()
 	{
 		//Create ICE info for media
 		ICEInfo info = new ICEInfo();

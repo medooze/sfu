@@ -20,7 +20,7 @@ public  class SourceInfo {
 	@XmlElement
 	private String streamId;
 	@XmlElement
-	private String trakcId;
+	private String trackId;
 
 	public SourceInfo(Long ssrc) {
 		this.ssrc = ssrc;
@@ -42,12 +42,12 @@ public  class SourceInfo {
 		this.streamId = streamId;
 	}
 
-	public String getTrakcId() {
-		return trakcId;
+	public String getTrackId() {
+		return trackId;
 	}
 
-	public void setTrakcId(String trakcId) {
-		this.trakcId = trakcId;
+	public void setTrackId(String trackId) {
+		this.trackId = trackId;
 	}
 
 	public Long getSSRC() {
