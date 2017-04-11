@@ -1,12 +1,12 @@
 # Medooze SFU 
 A future proof, experimental WebRTC VP9 SVC SFU.
 
-#Motivation
+# Motivation
 There are already several good production ready alternatives for implementing multiconferencing on webrtc, like Jitsi, Janus or SwitchRTC SFUs and even if you need more legacy support you can try our [MCU](http://www.medooze.com/products/mcu.aspx). Our goal is to experiment and provide an early access to the functionalities that will be available in the near future that will improve drastically the performance and quality of multiconferencing services on WebRTC. 
  
 Due to the experimental nature of this functionalities we will only officially support Chrome Canary to be able to access the very latest functionalities available (sometimes even running behind a flag). We don't care about interporeability with other browsers (they will eventually catch up) nor SDP legacy support.
 
-#Goal
+# Goal
 It is our goal to implement only the We intent to implement support the following features:
 
 - [VP9 SVC](https://tools.ietf.org/html/draft-ietf-payload-vp9-02)
@@ -25,7 +25,7 @@ To enable Flex FEC and VP9 SVC on Chrome Canary you must use the following comma
 chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/WebRTC-FlexFEC-03/Enabled
 ```
 
-#Compilation
+# Compilation
 ## SFU controller
 ```
 maven package
