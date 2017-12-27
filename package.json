@@ -4,6 +4,7 @@
   "description": "WebRTC SFU for Node",
   "main": "index.js",
   "dependencies": {
+    "medooze-media-server": "^0.12.2",
     "semantic-sdp": "^2.4.0",
     "transaction-manager": "^1.2.0",
     "websocket": "^1.0.24"

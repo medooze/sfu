@@ -30,8 +30,21 @@ chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/WebRTC-F
 You just need to install all the depencencies and generate the ssl certificates:
 
 ```
-npm i
+npm install 
 openssl req -sha256 -days 3650 -newkey rsa:1024 -nodes -new -x509 -keyout server.key -out server.cert
+```
+
+If you get an error like this
+```
+gyp verb build dir attempting to create "build" dir: /usr/local/src/medooze/sfu/node_modules/medooze-media-server/build
+gyp ERR! configure error
+gyp ERR! stack Error: EACCES: permission denied, mkdir '/usr/local/src/medooze/sfu/node_modules/medooze-media-server/build'
+
+```
+
+You may try instead with:
+```
+npm install --unsafe-perm
 ```
 
 # Usage
