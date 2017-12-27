@@ -1,0 +1,32 @@
+{
+  "name": "sfu-node",
+  "version": "0.0.1",
+  "description": "WebRTC SFU for Node",
+  "main": "index.js",
+  "dependencies": {
+    "semantic-sdp": "^2.4.0",
+    "transaction-manager": "^1.2.0",
+    "websocket": "^1.0.24"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/medooze/sfu-node.git"
+  },
+  "keywords": [
+    "webrtc",
+    "node",
+    "sfu",
+    "vp9",
+    "svc"
+  ],
+  "author": "Sergio Garcia Murillo @ Medooze",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/medooze/sfu-node/issues"
+  },
+  "homepage": "https://github.com/medooze/sfu-node#readme"
+}

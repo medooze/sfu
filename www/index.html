@@ -1,0 +1,200 @@
+<html>
+	<head>
+	<style>
+		body {
+			background: #e2e1e0;
+			text-align: center;
+			margin: 0px;
+			padding: 0px;
+		}
+
+		.scroll {
+			overflow: auto;
+			overflow: overlay;
+			z-index: 9;
+			scroll-snap-type: proximity;
+		}
+		.scroll::-webkit-scrollbar {
+			position: absolute;
+			width: 12px;
+			height: 12px;
+		}
+		.scroll::-webkit-scrollbar-button {
+			width: 0px;
+			height: 0px;
+		}
+		.scroll::-webkit-scrollbar-corner {
+			background-color: transparent;
+		}
+		.scroll::-webkit-scrollbar-track {
+			border: 4px solid transparent;
+			border-radius: 50px;
+			background-clip: content-box;
+			background-color: transparent;
+		}
+		.scroll::-webkit-scrollbar-thumb {
+			border: 4px solid transparent;
+			border-radius: 50px;
+			background-clip: content-box;
+			background-color: rgba(0, 0, 0, 0.2);
+			min-height: 40px;
+		}
+		.scroll.dark::-webkit-scrollbar-thumb {
+			background-color: rgba(255, 255, 255, 0.4);
+			min-height: 40px;
+		}
+		.scroll:hover::-webkit-scrollbar-track {
+			background-color: rgba(0, 0, 0, 0.1);
+		}
+		.scroll.dark:hover::-webkit-scrollbar-track {
+			background-color: rgba(255, 255, 255, 0.2);
+		}
+		.scroll:hover::-webkit-scrollbar-thumb {
+			background-color: rgba(0, 0, 0, 0.3);
+		}
+		.scroll.dark:hover::-webkit-scrollbar-thumb {
+			background-color: rgba(255, 255, 255, 0.6);
+		}
+		.scroll:hover::-webkit-scrollbar-track:hover {
+			background-color: rgba(0, 0, 0, 0.2);
+		}
+		.scroll.dark:hover::-webkit-scrollbar-track:hover {
+			background-color: rgba(255, 255, 255, 0.3);
+		}
+		.scroll:hover::-webkit-scrollbar-thumb:hover {
+			background-color: rgba(0, 0, 0, 0.5);
+		}
+		.scroll.dark:hover::-webkit-scrollbar-thumb:hover {
+			background-color: rgba(255, 255, 255, 0.8);
+		}
+		.scroll:hover::-webkit-scrollbar-thumb:active {
+			background-color: rgba(0, 0, 0, 0.8);
+		}
+		.scroll.dark:hover::-webkit-scrollbar-thumb:active {
+			background-color: rgba(255, 255, 255, 0.8);
+		}
+		.scroll.scroll-big::-webkit-scrollbar {
+			width: 24px;
+			height: 24px;
+		}
+		.scroll.scroll-big::-webkit-scrollbar-button {
+			width: 0px;
+			height: 0px;
+		}
+		.scroll.scroll-big::-webkit-scrollbar-corner {
+			background-color: transparent;
+		}
+		.scroll.scroll-big::-webkit-scrollbar-track {
+			border: 9px solid transparent;
+			border-radius: 50px;
+			background-clip: content-box;
+			background-color: transparent;
+		}
+		.scroll.scroll-big::-webkit-scrollbar-thumb {
+			border: 9px solid transparent;
+			border-radius: 50px;
+			background-clip: content-box;
+			background-color: rgba(0, 0, 0, 0.2);
+			min-height: 40px;
+		}
+		.scroll.scroll-big.dark::-webkit-scrollbar-thumb {
+			background-color: rgba(255, 255, 255, 0.4);
+			min-height: 40px;
+		}
+		.scroll.scroll-big:hover::-webkit-scrollbar-track {
+			background-color: rgba(0, 0, 0, 0.1);
+		}
+		.scroll.scroll-big.dark:hover::-webkit-scrollbar-track {
+			background-color: rgba(255, 255, 255, 0.2);
+		}
+		.scroll.scroll-big:hover::-webkit-scrollbar-thumb {
+			background-color: rgba(0, 0, 0, 0.3);
+		}
+		.scroll.scroll-big.dark:hover::-webkit-scrollbar-thumb {
+			background-color: rgba(255, 255, 255, 0.6);
+		}
+		.scroll.scroll-big:hover::-webkit-scrollbar-track:hover {
+			background-color: rgba(0, 0, 0, 0.2);
+		}
+		.scroll.scroll-big.dark:hover::-webkit-scrollbar-track:hover {
+			background-color: rgba(255, 255, 255, 0.3);
+		}
+		.scroll.scroll-big:hover::-webkit-scrollbar-thumb:hover {
+			background-color: rgba(0, 0, 0, 0.5);
+		}
+		.scroll.scroll-big.dark:hover::-webkit-scrollbar-thumb:hover {
+			background-color: rgba(255, 255, 255, 0.8);
+		}
+		.scroll.scroll-big:hover::-webkit-scrollbar-thumb:active {
+			background-color: rgba(0, 0, 0, 0.8);
+		}
+		.scroll.scroll-big.dark:hover::-webkit-scrollbar-thumb:active {
+			background-color: rgba(255, 255, 255, 0.8);
+		}
+
+		video {
+			object-fit: cover;
+			float: left;
+			background: #fff;
+			border-radius: 2px;
+			display: inline-block;
+			margin: 1rem;
+			position: relative;
+			height: 150px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+			transition: all 0.5s cubic-bezier(.25,.8,.25,1);
+			padding:1px;
+			bottom: 0px;
+			max-width: 200px;
+			opacity: 1;
+		}
+		
+		.disabled {
+			height: 0px;
+			opacity: 0;
+		}
+		
+		video:hover {
+			box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+			bottom: 125px;
+			height: 300px;
+			max-width: 400px;
+		}
+		video::before {
+			content: "hola";
+		}
+		video::after {
+			content: "hola";
+		}
+
+		#outher-container {
+			margin: 0px;
+			padding: 0px;
+			width: 100%;
+			position: fixed;
+			bottom: 5px;
+			height: 450px;
+			display: flex;
+			overflow-x: auto;
+			overflow-y: hidden;
+		}
+		#container {
+			position: absolute;
+			bottom: 60px;
+			margin: 0px;
+			padding: 0px;
+			height: 150px;
+			display: flex;
+		}
+	</style>
+	<script src="js/transaction-manager.js" type="text/javascript"></script>
+	<script src="js/sfu.js" type="text/javascript"></script>
+	</head>
+	<body>
+	<div id="outher-container" class="scroll">
+		<div id="container">
+		</div>
+	</div>
+	</body>
+		
+</html>	
