@@ -27,8 +27,11 @@ chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/WebRTC-F
 
 # Install
 
+You just need to install all the depencencies and generate the ssl certificates:
+
 ```
 npm i
+openssl req -sha256 -days 3650 -newkey rsa:1024 -nodes -new -x509 -keyout server.key -out server.cert
 ```
 
 # Usage
