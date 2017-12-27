@@ -265,7 +265,11 @@ navigator.mediaDevices.getUserMedia({
 	
 	var dialog = document.querySelector('dialog');
 	dialog.showModal();
-	dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+	if (roomId)
+	{
+		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+		dialog.querySelector('#name').focus();
+	}
 	dialog.querySelector('#random').addEventListener('click', function() {
 		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
 		dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
