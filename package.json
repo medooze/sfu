@@ -1,5 +1,5 @@
 {
-  "name": "sfu-node",
+  "name": "sfu",
   "version": "0.0.1",
   "description": "WebRTC SFU for Node",
   "main": "index.js",

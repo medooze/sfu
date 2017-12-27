@@ -1,5 +1,15 @@
 <html>
 	<head>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+	<link href="css/getmdl-select.min.css" rel="stylesheet" type="text/css"/>
+	<link href="css/flag-icon.min.css" rel="stylesheet" type="text/css"/>
+	<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+	<script src="js/transaction-manager.js" type="text/javascript"></script>
+	<script src="js/getmdl-select.js" type="text/javascript"></script>
+	<script src="js/soundmeter.js" type="text/javascript"></script>
+	<script src="js/sfu.js" type="text/javascript"></script>
 	<style>
 		body {
 			background: #e2e1e0;
@@ -173,7 +183,7 @@
 			width: 100%;
 			position: fixed;
 			bottom: 5px;
-			height: 450px;
+			height: 100%;
 			display: flex;
 			overflow-x: auto;
 			overflow-y: hidden;
@@ -186,14 +196,136 @@
 			height: 150px;
 			display: flex;
 		}
+		
+		.ready-dialog 
+		{
+			width: 640px;
+			text-align: left;
+
+		}
+		.ready-dialog p 
+		{
+			color: black;
+			font-size: 12pt;
+
+		}
+		.ready-dialog code
+		{
+			font-size: 12pt;
+
+		}
+			
+		/***********************************/
+		.bar-audio{
+			display: block;
+			margin: 0 auto;
+			padding-left: 40px;
+			padding-bottom: 5px;
+		}
+		bar-audio p.text-1{
+			font-size: 8px;
+			margin: 5px;
+		}
+
+		bar-audio p.text-1 span{
+			font-size: 8px;
+			padding-left: 155px;
+		}
+
+		.bg-bar-outher {
+			width: 300px;
+			text-align: left;
+		}
+		.bg-bar{
+			margin: 0 auto;
+			display:block;
+			height:20px;
+			width:202px;
+			background: url("images/bar_audio.png");
+
+
+		}
+		.bar-inside{
+			display:block;
+			height:20px;
+			width:0%;
+			background: url("images/bar_audio_on.png");
+		}
+		#random {
+			top: -8px;
+			left: 15px;
+		}
+		
+		.room-header {
+			position: relative;
+			top: 10px;
+			margin: 0 auto;
+		}
+		
+		.room-info  {
+			background: #111;
+			border-radius: 2px;
+			width: 200px;
+			height: 40px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+			transition: all 0.5s cubic-bezier(.25,.8,.25,1);
+			opacity: 0;
+			padding-top: 15px;
+			font-size: 14pt;
+			color: white;
+		}
+		a {
+			text-decoration: none !important;
+		}
+		
 	</style>
-	<script src="js/transaction-manager.js" type="text/javascript"></script>
-	<script src="js/sfu.js" type="text/javascript"></script>
 	</head>
 	<body>
 	<div id="outher-container" class="scroll">
-		<div id="container">
+		<div class="room-header">
+			<div class="room-info"> Room: <a href="" id="room-id"></a></div>
 		</div>
+		<div id="container">
+			<dialog class="ready-dialog mdl-dialog">
+				<h4 class="mdl-dialog__title">Medooze SFU</h4>
+				<div class="mdl-dialog__content">
+					<p>
+						Please enter the room ID for the conference you want to create, your name and select the audio microphone you wish to use
+					</p>
+					<form action="#" id="ready-form">
+						<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+							<input class="mdl-textfield__input" type="text" id="roomId" name="roomId" required>
+							<label class="mdl-textfield__label" for="roomId">Room Id</label>
+						</div>
+						<button type="button" class="ready mdl-button mdl-button mdl-button--raised" id="random">Random</button>
+						<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+							<input class="mdl-textfield__input" type="text" id="name" name="name" required>
+							<label class="mdl-textfield__label" for="name">Name</label>
+						</div>
+						<div class="mdl-selectfield">
+							<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label getmdl-select getmdl-select__fix-height">
+								<input class="mdl-textfield__input" type="text" id="audio_devices" readonly tabIndex="-1" value="Default">
+								<label for="audio_devices">
+									<i class="mdl-icon-toggle__label material-icons">keyboard_arrow_down</i>
+								</label>
+								<label for="audio_devices" class="mdl-textfield__label">Audio Device</label>
+								<ul id="audio_devices_menu" for="audio_devices" class="mdl-menu mdl-menu--bottom-left mdl-js-menu" style="width:300px">
+								</ul>
+							</div>
+						</div>
+						<div class="bg-bar-outher">
+							<div class="bg-bar">
+								<div class="voometer bar-inside" style="width: 5%;"></div>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="mdl-dialog__actions">
+					<button type="submit" class="ready mdl-button mdl-button mdl-button--raised  mdl-button--accent" id="connect" form="ready-form">Ready!</button>
+				</div>
+			</dialog>
+		</div>
+		
 	</div>
 	</body>
 		

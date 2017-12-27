@@ -1,12 +1,13 @@
 const url = "wss://192.168.64.129:8000/ws";
 let participants;
+let audioDeviceId;
 
 //Get our url
 const href = new URL(window.location.href);
 //Get id
-const roomId = href.searchParams.get("roomId") || 1;
+const roomId = href.searchParams.get("roomId");
 //Get name
-const name = href.searchParams.get("name") || "<anonymous>";
+const name = href.searchParams.get("name");
 //Get video
 const nopublish = href.searchParams.has("nopublish");
 
@@ -39,7 +40,7 @@ function removeVideoForStream(stream)
 	video.className = "disabled";
 }
 
-function connect(url,roomId) 
+function connect(url,roomId,name) 
 {
 	var pc = new RTCPeerConnection({
 		bundlePolicy: "max-bundle",
@@ -73,7 +74,9 @@ function connect(url,roomId)
 			if (!nopublish)
 			{
 				const stream = await navigator.mediaDevices.getUserMedia({
-					audio: true,
+					audio: {
+						deviceId: audioDeviceId
+					},
 					video: true
 				});
 
@@ -100,7 +103,7 @@ function connect(url,roomId)
 			
 			//Join room
 			const joined = await tm.cmd("join",{
-				name	: "pepe",
+				name	: name,
 				sdp	: offer.sdp
 			});
 			
@@ -171,8 +174,111 @@ function connect(url,roomId)
 	});
 }
 
+navigator.mediaDevices.getUserMedia({
+	audio: true,
+	video: false
+})
+.then(function(stream){	
 
-connect(url, roomId);
+	//Set the input value
+	audio_devices.value = stream.getAudioTracks()[0].label;
+	
+	//Get the select
+	var menu = document.getElementById("audio_devices_menu");
+	
+	//Populate the device lists
+	navigator.mediaDevices.enumerateDevices()
+		.then(function(devices) {
+			//For each one
+			devices.forEach(function(device) 
+			{
+				//It is a mic?
+				if (device.kind==="audioinput")
+				{
+					//Create menu item
+					var li = document.createElement("li");
+					//Populate
+					li.dataset["val"] = device.deviceId;	
+					li.innerText = device.label;
+					li.className = "mdl-menu__item";
+					
+					//Add listener
+					li.addEventListener('click', function() {
+						console.log(device.deviceId);
+						//Close previous
+						stream.getAudioTracks()[0].stop();
+						//Store device id
+						audioDeviceId = device.deviceId
+						//Get stream for the device
+						navigator.mediaDevices.getUserMedia({
+							audio: {
+								deviceId: device.deviceId
+							},
+							video: false
+						})
+						.then(function(stream){	
+							//Store it
+							soundMeter.connectToSource(stream).then(draw);
+						});
+	
+					});
+					//Append
+					menu.appendChild (li);
+				}
+			});
+			//Upgrade
+			getmdlSelect.init('.getmdl-select');
+		        componentHandler.upgradeDom();
+		})
+		.catch(function(error){
+			console.log(error);
+		});
+	
+	var fps = 20;
+	var now;
+	var then = Date.now();
+	var interval = 1000/fps;
+	var delta;
+	var drawTimer;
+	var soundMeter = new SoundMeter(window);
+	//Stop
+	cancelAnimationFrame(drawTimer);
 
+	function draw() {
+		drawTimer = requestAnimationFrame(draw);
 
+		now = Date.now();
+		delta = now - then;
+
+		if (delta > interval) {
+			then = now ;
+			var tot = Math.min(100,(soundMeter.instant*200));
+			//Get all 
+			const voometers = document.querySelectorAll (".voometer");
+			//Set new size
+			for (let i=0;i<voometers.length;++i)
+				voometers[i].style.width = (Math.floor(tot/5)*5) + "%";
+		}
+	
+	}
+	soundMeter.connectToSource(stream).then(draw);
+	
+	var dialog = document.querySelector('dialog');
+	dialog.showModal();
+	dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+	dialog.querySelector('#random').addEventListener('click', function() {
+		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+		dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+	});
+	dialog.querySelector('form').addEventListener('submit', function(event) {
+		dialog.close();
+		var a = document.querySelector(".room-info a");
+		a.target = "_blank";
+		a.href = "?roomId="+this.roomId.value;
+		a.innerText = this.roomId.value;
+		a.parentElement.style.opacity = 1;
+		connect(url, this.roomId.value, this.name.value);
+		event.preventDefault();
+	});
+});
 
