@@ -55,7 +55,7 @@ In order to run the sfu just:
 node index.js [ip]
 ```
 
-where the `ip` is the ICE candidate ip address used for RTP media. To test a simple web client just browse to `https://[ip]:8000/".
+where the `ip` is the ICE candidate ip address used for RTP media. To test a simple web client just browse to `https://[ip]:8000/`.
 
 # License
 MIT
