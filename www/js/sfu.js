@@ -1,4 +1,3 @@
-const url = "wss://192.168.64.129:8000/ws";
 let participants;
 let audioDeviceId;
 
@@ -10,6 +9,8 @@ const roomId = href.searchParams.get("roomId");
 const name = href.searchParams.get("name");
 //Get video
 const nopublish = href.searchParams.has("nopublish");
+//Get ws url from navigaro url
+const url = "wss://"+href.host;
 
 	
 function addVideoForStream(stream,muted)
