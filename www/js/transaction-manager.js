@@ -58,8 +58,12 @@ EventEmitter.prototype.emit = function(type) {
       er = arguments[1];
       if (er instanceof Error) {
         throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
       }
-      throw TypeError('Uncaught, unspecified "error" event.');
     }
   }
 
@@ -82,18 +86,11 @@ EventEmitter.prototype.emit = function(type) {
         break;
       // slower
       default:
-        len = arguments.length;
-        args = new Array(len - 1);
-        for (i = 1; i < len; i++)
-          args[i - 1] = arguments[i];
+        args = Array.prototype.slice.call(arguments, 1);
         handler.apply(this, args);
     }
   } else if (isObject(handler)) {
-    len = arguments.length;
-    args = new Array(len - 1);
-    for (i = 1; i < len; i++)
-      args[i - 1] = arguments[i];
-
+    args = Array.prototype.slice.call(arguments, 1);
     listeners = handler.slice();
     len = listeners.length;
     for (i = 0; i < len; i++)
@@ -131,7 +128,6 @@ EventEmitter.prototype.addListener = function(type, listener) {
 
   // Check for listener leak
   if (isObject(this._events[type]) && !this._events[type].warned) {
-    var m;
     if (!isUndefined(this._maxListeners)) {
       m = this._maxListeners;
     } else {
@@ -253,7 +249,7 @@ EventEmitter.prototype.removeAllListeners = function(type) {
 
   if (isFunction(listeners)) {
     this.removeListener(type, listeners);
-  } else {
+  } else if (listeners) {
     // LIFO order
     while (listeners.length)
       this.removeListener(type, listeners[listeners.length - 1]);
@@ -274,15 +270,20 @@ EventEmitter.prototype.listeners = function(type) {
   return ret;
 };
 
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
 EventEmitter.listenerCount = function(emitter, type) {
-  var ret;
-  if (!emitter._events || !emitter._events[type])
-    ret = 0;
-  else if (isFunction(emitter._events[type]))
-    ret = 1;
-  else
-    ret = emitter._events[type].length;
-  return ret;
+  return emitter.listenerCount(type);
 };
 
 function isFunction(arg) {
@@ -304,6 +305,31 @@ function isUndefined(arg) {
 },{}],2:[function(require,module,exports){
 "use strict";
  const EventEmitter = require('events');
+ 
+class Namespace extends EventEmitter
+{
+	constructor(namespace,tm)
+	{
+		super();
+		this.namespace = namespace;
+		this.tm = tm;
+	}
+	
+	cmd(name,data) 
+	{
+		return this.tm.cmd(name,data,this.namespace);
+	}
+	
+	event(name,data) 
+	{
+		return this.tm.event(name,data,this.namespace);
+	}
+	
+	close()
+	{
+		return this.tm.namespaces.delete(this.namespace);
+	}
+};
 
 class TransactionManager extends EventEmitter
 {
@@ -311,11 +337,12 @@ class TransactionManager extends EventEmitter
 	{
 		super();
 		this.maxId = 0;
+		this.namespaces = new Map();
 		this.transactions = new Map();
 		this.transport = transport;
 		
 		//Message event listener
-		var listener = (msg) => {
+		this.listener = (msg) => {
 			//Process message
 			var message = JSON.parse(msg.utf8Data || msg.data);
 
@@ -325,60 +352,100 @@ class TransactionManager extends EventEmitter
 				case "cmd" :
 					//Create command
 					const cmd = {
-						name	: message.name,
-						data	: message.data,
-						accept	: (data) => {
+						name		: message.name,
+						data		: message.data,
+						namespace	: message.namespace,
+						accept		: (data) => {
 							//Send response back
 							transport.send(JSON.stringify ({
 								type	 : "response",
 								transId	 : message.transId,
-								accepted : true,
 								data	 : data
 							}));
 						},
 						reject	: (data) => {
 							//Send response back
 							transport.send(JSON.stringify ({
-								type	 : "response",
+								type	 : "error",
 								transId	 : message.transId,
-								accepted : false,
 								data	 : data
 							}));
 						}
 					};
-					//Launch event
-					this.emit("cmd",cmd);
+					
+					//If it has a namespace
+					if (cmd.namespace)
+					{
+						//Get namespace
+						const namespace = this.namespaces.get(cmd.namespace);
+						//If we have it
+						if (namespace)
+							//trigger event only on namespace
+							namespace.emit("cmd",cmd);
+						else
+							//Launch event on main event handler
+							this.emit("cmd",cmd);
+					} else {
+						//Launch event on main event handler
+						this.emit("cmd",cmd);
+					}
 					break;
 				case "response":
+				{
 					//Get transaction
 					const transaction = this.transactions.get(message.transId);
 					if (!transaction)
 						return;
 					//delete transacetion
 					this.transactions.delete(message.transId);
-					if (message.accepted)
-						transaction.resolve(message.data);
-					else
-						transaction.reject(message.data);
-					
+					//Accept
+					transaction.resolve(message.data);
 					break;
+				}
+				case "error":
+				{
+					//Get transaction
+					const transaction = this.transactions.get(message.transId);
+					if (!transaction)
+						return;
+					//delete transacetion
+					this.transactions.delete(message.transId);
+					//Reject
+					transaction.reject(message.data);
+					break;
+				}
 				case "event":
 					//Create event
 					const event = {
-						name	: message.name,
-						data	: message.data,
+						name		: message.name,
+						data		: message.data,
+						namespace	: message.namespace,
 					};
-					//Launch event
-					this.emit("event",event);
+					//If it has a namespace
+					if (event.namespace)
+					{
+						//Get namespace
+						var namespace = this.namespaces.get(event.namespace);
+						//If we have it
+						if (namespace)
+							//trigger event
+							namespace.emit("event",event);
+						else
+							//Launch event on main event handler
+							this.emit("event",event);
+					} else {
+						//Launch event on main event handler
+						this.emit("event",event);
+					}
 					break;
 			}
 		};
 		
 		//Add it
-		this.transport.addListener ? this.transport.addListener("message",listener) : this.transport.addEventListener("message",listener);
+		this.transport.addListener ? this.transport.addListener("message",this.listener) : this.transport.addEventListener("message",this.listener);
 	}
 	
-	cmd(name,data) 
+	cmd(name,data,namespace) 
 	{
 		return new Promise((resolve,reject) => {
 			//Check name is correct
@@ -392,6 +459,10 @@ class TransactionManager extends EventEmitter
 				name	: name,
 				data	: data
 			};
+			//Check namespace
+			if (namespace)
+				//Add it
+				cmd.namespace = namespace;
 			//Serialize
 			const json = JSON.stringify(cmd);
 			//Add callbacks
@@ -409,11 +480,10 @@ class TransactionManager extends EventEmitter
 				//rethrow
 				throw e;
 			}
-			
 		});
 	}
 	
-	event(name,data) 
+	event(name,data,namespace) 
 	{
 		//Check name is correct
 		if (!name || name.length===0)
@@ -425,15 +495,42 @@ class TransactionManager extends EventEmitter
 			name	: name,
 			data	: data
 		};
+		//Check namespace
+		if (namespace)
+			//Add it
+			event.namespace = namespace;
 		//Serialize
 		const json = JSON.stringify(event);
 		//Send json
-		this.transport.send(json);
-
+		return this.transport.send(json);
+	}
+	
+	namespace(ns)
+	{
+		//Check if we already have them
+		let namespace = this.namespaces.get(ns);
+		//If already have it
+		if (namespace) return namespace;
+		//Create one instead
+		namespace = new Namespace(ns,this);
+		//Store it
+		this.namespaces.set(ns, namespace);
+		//ok
+		return namespace;
+		
+	}
+	
+	close()
+	{
+		//Erase namespaces
+		for (const ns of this.namespace.values())
+			//terminate it
+			ns.close();
+		//remove lisnters
+		this.transport.removeListener ? this.transport.removeListener("message",this.listener) : this.transport.removeEventListener("message",this.listener);
 	}
 };
 
-window.TransactionManager = TransactionManager;
 module.exports = TransactionManager;
 },{"events":1}]},{},[2])(2)
 });

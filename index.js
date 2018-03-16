@@ -95,7 +95,7 @@ const server = https.createServer (options, (req, res) => {
 			}
 		});
 	});
-}).listen (8000);
+}).listen (PORT);
 
 //Create ws server
 const ws = new WebSocketServer ({
