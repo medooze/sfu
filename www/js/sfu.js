@@ -44,8 +44,10 @@ function removeVideoForStream(stream)
 function connect(url,roomId,name) 
 {
 	var pc = new RTCPeerConnection({
-		bundlePolicy: "max-bundle",
-		rtcpMuxPolicy : "require"
+		bundlePolicy	: "max-bundle",
+		rtcpMuxPolicy	: "require",
+		sdpSemantics	: "plan-b"
+		
 	});
 	
 	//Create room url
