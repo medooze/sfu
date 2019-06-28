@@ -60,3 +60,4 @@ typings/
 /nbproject/private/
 /server.cert
 /server.key
+package-lock.json

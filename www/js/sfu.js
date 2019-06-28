@@ -6,7 +6,10 @@ const href = new URL(window.location.href);
 //Get id
 const roomId = href.searchParams.get("roomId");
 //Get name
-const name = href.searchParams.get("name");
+let name = href.searchParams.get("name");
+if (!name) {
+  name = href.searchParams.get("username");
+}
 //Get video
 const nopublish = href.searchParams.has("nopublish");
 //Get ws url from navigaro url
@@ -45,12 +48,13 @@ function connect(url,roomId,name)
 {
 	var pc = window.pc = new RTCPeerConnection({
 		bundlePolicy: "max-bundle",
-		rtcpMuxPolicy : "require"
+		rtcpMuxPolicy : "require",
+		sdpSemantics	: "plan-b"
 	});
 
 	let getStats = new GetStats();
 	getStats.init("//logstash.cosmosoftware.io:5000", name, roomId, "Medooze", pc); //Use "http://127.0.0.1:5000" to use it locally with logstash on the client side
-	getStats.startPublishing(10000);
+	getStats.startPublishing(1000);
 
 	//Create room url
 	const roomUrl = url +"?id="+roomId;
@@ -278,7 +282,7 @@ navigator.mediaDevices.getUserMedia({
 	  a.href = "?roomId="+this.roomId.value;
 	  a.innerText = this.roomId.value;
 	  a.parentElement.style.opacity = 1;
-	  connect(url, roomId, name);
+	  connect(url, this.roomId.value, this.name.value);
 	  event.preventDefault();
   	}
 	else if (roomId)
