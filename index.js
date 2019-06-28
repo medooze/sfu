@@ -32,8 +32,8 @@ const rooms = new Map();
 const base = 'www';
 
 const options = {
-        key: fs.readFileSync ('/etc/letsencrypt/live/sgmedooze.cosmosoftware.io/privkey.pem'),
-        cert: fs.readFileSync ('/etc/letsencrypt/live/sgmedooze.cosmosoftware.io/fullchain.pem')
+	key: fs.readFileSync ('server.key'),
+	cert: fs.readFileSync ('server.cert')
 };
 
 // maps file extention to MIME typere
