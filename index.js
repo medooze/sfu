@@ -32,8 +32,8 @@ const rooms = new Map();
 const base = 'www';
 
 const options = {
-	key: fs.readFileSync ('server.key'),
-	cert: fs.readFileSync ('server.cert')
+        key: fs.readFileSync ('/etc/letsencrypt/live/sgmedooze.cosmosoftware.io/privkey.pem'),
+        cert: fs.readFileSync ('/etc/letsencrypt/live/sgmedooze.cosmosoftware.io/fullchain.pem')
 };
 
 // maps file extention to MIME typere
@@ -74,7 +74,12 @@ const server = https.createServer (options, (req, res) => {
 
 		// if is a directory search for index file matching the extention
 		if (fs.statSync (pathname).isDirectory ())
-			pathname += '/index.html';
+		{
+			res.writeHead(302, {
+			  'Location': pathname + '/index.html'
+			});
+			res.end();
+		}
 
 		// read file from file system
 		fs.readFile (pathname, (err, data) => {
