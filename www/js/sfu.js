@@ -47,7 +47,6 @@ function connect(url,roomId,name)
 		bundlePolicy	: "max-bundle",
 		rtcpMuxPolicy	: "require",
 		sdpSemantics	: "plan-b"
-		
 	});
 	
 	//Create room url
@@ -268,16 +267,8 @@ navigator.mediaDevices.getUserMedia({
 	
 	var dialog = document.querySelector('dialog');
 	dialog.showModal();
-	if (roomId)
-	{
+	if (roomId && name) {
 		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
-		dialog.querySelector('#name').focus();
-	}
-	dialog.querySelector('#random').addEventListener('click', function() {
-		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
-		dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
-	});
-	dialog.querySelector('form').addEventListener('submit', function(event) {
 		dialog.close();
 		var a = document.querySelector(".room-info a");
 		a.target = "_blank";
@@ -286,6 +277,28 @@ navigator.mediaDevices.getUserMedia({
 		a.parentElement.style.opacity = 1;
 		connect(url, this.roomId.value, this.name.value);
 		event.preventDefault();
-	});
+	}
+	else if (roomId)
+	{
+		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+		dialog.querySelector('#name').focus();
+	}
+	else 
+	{
+		dialog.querySelector('#random').addEventListener('click', function() {
+			dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+			dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+		});
+		dialog.querySelector('form').addEventListener('submit', function(event) {
+			dialog.close();
+			var a = document.querySelector(".room-info a");
+			a.target = "_blank";
+			a.href = "?roomId="+this.roomId.value;
+			a.innerText = this.roomId.value;
+			a.parentElement.style.opacity = 1;
+			connect(url, this.roomId.value, this.name.value);
+			event.preventDefault();
+		});
+	}
 });
 
