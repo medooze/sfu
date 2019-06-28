@@ -74,12 +74,7 @@ const server = https.createServer (options, (req, res) => {
 
 		// if is a directory search for index file matching the extention
 		if (fs.statSync (pathname).isDirectory ())
-		{
-			res.writeHead(302, {
-			  'Location': pathname + '/index.html'
-			});
-			res.end();
-		}
+			pathname += '/index.html';
 
 		// read file from file system
 		fs.readFile (pathname, (err, data) => {
