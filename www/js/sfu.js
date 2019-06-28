@@ -282,7 +282,7 @@ navigator.mediaDevices.getUserMedia({
 	  a.href = "?roomId="+this.roomId.value;
 	  a.innerText = this.roomId.value;
 	  a.parentElement.style.opacity = 1;
-	  connect(url, this.roomId.value, this.name.value);
+	  connect(url, this.roomId.value, name);
 	  event.preventDefault();
   	}
 	else if (roomId)
