@@ -8,7 +8,7 @@ const roomId = href.searchParams.get("roomId");
 //Get name
 let name = href.searchParams.get("name");
 if (!name) {
-  name = href.searchParams.get("username");
+	name = href.searchParams.get("username");
 }
 //Get video
 const nopublish = href.searchParams.has("nopublish");
@@ -37,9 +37,9 @@ function removeVideoForStream(stream)
 	var video = document.getElementById(stream.id);
 	//Remove it when done
 	video.addEventListener('webkitTransitionEnd',function(){
-            //Delete it
-	    video.parentElement.removeChild(video);
-        });
+			//Delete it
+		video.parentElement.removeChild(video);
+		});
 	//Disable it first
 	video.className = "disabled";
 }
@@ -76,7 +76,7 @@ function connect(url,roomId,name)
 
 	ws.onopen = async function()
 	{
-	        console.log("ws:opened");
+			console.log("ws:opened");
 
 		try
 		{
@@ -237,7 +237,7 @@ navigator.mediaDevices.getUserMedia({
 			});
 			//Upgrade
 			getmdlSelect.init('.getmdl-select');
-		        componentHandler.upgradeDom();
+				componentHandler.upgradeDom();
 		})
 		.catch(function(error){
 			console.log(error);
@@ -275,27 +275,27 @@ navigator.mediaDevices.getUserMedia({
 	var dialog = document.querySelector('dialog');
 	dialog.showModal();
 	if (roomId && name) {
-	  dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
-	  dialog.close();
-	  var a = document.querySelector(".room-info a");
-	  a.target = "_blank";
-	  a.href = "?roomId="+this.roomId.value;
-	  a.innerText = this.roomId.value;
-	  a.parentElement.style.opacity = 1;
-	  connect(url, this.roomId.value, name);
-	  event.preventDefault();
-  	}
-	else if (roomId)
-	{
 		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
-		dialog.querySelector('#name').focus();
+		dialog.close();
+		var a = document.querySelector(".room-info a");
+		a.target = "_blank";
+		a.href = "?roomId="+this.roomId.value;
+		a.innerText = this.roomId.value;
+		a.parentElement.style.opacity = 1;
+		connect(url, this.roomId.value, name);
+		event.preventDefault();
 	}
-	else
-	{
-		dialog.querySelector('#random').addEventListener('click', function() {
-			dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
-			dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
-		});
+	else {
+		if (roomId) {
+			dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+			dialog.querySelector('#name').focus();
+		}
+		else {
+			dialog.querySelector('#random').addEventListener('click', function() {
+				dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+				dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+			});
+		}
 		dialog.querySelector('form').addEventListener('submit', function(event) {
 			dialog.close();
 			var a = document.querySelector(".room-info a");
@@ -303,7 +303,7 @@ navigator.mediaDevices.getUserMedia({
 			a.href = "?roomId="+this.roomId.value;
 			a.innerText = this.roomId.value;
 			a.parentElement.style.opacity = 1;
-			connect(url, this.roomId.value, this.name.value);
+			connect(url, this.roomId.value, name);
 			event.preventDefault();
 		});
 	}
