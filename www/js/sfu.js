@@ -118,41 +118,88 @@ function addLocalVideoForStream(stream,muted)
 	container.appendChild(video);
 }
 
-function connect(url,roomId,name,currentCryptoKey) 
+/*
+ Get some key material to use as input to the deriveKey method.
+ The key material is a secret key supplied by the user.
+ */
+async function getRoomKey(roomId,secret) 
 {
-	function encrypt(chunk, controller) {
-		let view = new DataView(chunk.data);
-		// Any length that is needed can be used for the new buffer.
-		let newData = new ArrayBuffer(chunk.data.byteLength + 4);
-		let newView = new DataView(newData);
+	const enc = new TextEncoder();
+	const keyMaterial = await window.crypto.subtle.importKey(
+		"raw",
+		enc.encode(secret),
+		{name: "PBKDF2"},
+		false,
+		["deriveBits", "deriveKey"]
+	);
+	return window.crypto.subtle.deriveKey(
+		{
+			name: "PBKDF2",
+			salt: enc.encode(roomId),
+			iterations: 100000,
+			hash: "SHA-256"
+		},
+		keyMaterial,
+		{"name": "AES-GCM", "length": 256},
+		true,
+		["encrypt", "decrypt"]
+	);
+}
 
-		for (let i = 0; i < chunk.data.byteLength; ++i) 
-			newView.setInt8(i, view.getInt8(i) ^ currentCryptoKey.charAt(i % currentCryptoKey.length));
-
-		// Append checksum
-		newView.setUint32(chunk.data.byteLength, 0xDEADBEEF);
-
-		chunk.data = newData;
-
-		controller.enqueue(chunk);
+  /*
+   * 
+   */
+async function connect(url,roomId,name,secret) 
+{
+	let counter = 0;
+	const roomKey = await getRoomKey(roomId,secret);
+	async function encrypt(chunk, controller) {
+		try {
+			//Get iv
+			const iv = new ArrayBuffer(4);
+			//Create view, inc counter and set it
+			new DataView(iv).setUint32(0,counter <65535 ? counter++ : counter=0);
+			//Encrypt
+			const ciphertext = await window.crypto.subtle.encrypt(
+				{
+					name: "AES-GCM",
+					iv: iv
+				},
+				roomKey,
+				chunk.data
+			);
+			//Set chunk data
+			chunk.data = new ArrayBuffer(ciphertext.byteLength + 4);
+			//Crate new encoded data and allocate size for iv
+			const data = new Uint8Array(chunk.data);
+			//Copy iv
+			data.set(new Uint8Array(iv),0);
+			//Copy cipher
+			data.set(new Uint8Array(ciphertext),4);
+			//Write
+			controller.enqueue(chunk);
+		} catch(e) {
+		}
 	}
 
-	function decrypt(chunk, controller) {
-		let view = new DataView(chunk.data);
-		let checksum = view.getUint32(chunk.data.byteLength - 4);
-		if (checksum != 0xDEADBEEF) 
-			return console.error("Corrupted frame received checksum:" + checksum.toString(16));
-		let newData = new ArrayBuffer(chunk.data.byteLength - 4);
-		let newView = new DataView(newData);
-
-		for (let i = 0; i < chunk.data.byteLength - 4; ++i)
-			newView.setInt8(i, view.getInt8(i) ^ currentCryptoKey.charAt(i % currentCryptoKey.length));
-
-		chunk.data = newData;
-		controller.enqueue(chunk);
+	async function decrypt(chunk, controller) {
+		try {
+			//decrypt
+			chunk.data =  await window.crypto.subtle.decrypt(
+				{
+				  name: "AES-GCM",
+				  iv: new Uint8Array(chunk.data,0,4)
+				},
+				roomKey,
+				new Uint8Array(chunk.data,4,chunk.data.byteLength - 4)
+			);
+			//Write
+			controller.enqueue(chunk);
+		} catch(e) {
+		}
 	}
 	
-	const isCryptoEnabled = !!currentCryptoKey && supportsInsertableStreams;
+	const isCryptoEnabled = !!secret && supportsInsertableStreams;
 
 	var pc = new RTCPeerConnection({
 		bundlePolicy				: "max-bundle",
@@ -425,6 +472,7 @@ navigator.mediaDevices.getUserMedia({
 	dialog.querySelector('#random').addEventListener('click', function() {
 		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
 		dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+		dialog.querySelector('#key').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
 	});
 	dialog.querySelector('form').addEventListener('submit', function(event) {
 		dialog.close();
