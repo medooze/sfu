@@ -12,18 +12,20 @@ It is our goal to implement only the We intent to implement support the followin
 - [VP9 SVC](https://tools.ietf.org/html/draft-ietf-payload-vp9-02)
 - [RTP transport wide congestion control](https://tools.ietf.org/html/draft-holmer-rmcat-transport-wide-cc-extensions-01)
 - Sender side BitRate estimation: algorithm not decided yet candidates are [GCC](https://tools.ietf.org/html/draft-ietf-rmcat-gcc-02), [NADA](https://tools.ietf.org/html/draft-ietf-rmcat-nada-03) or [SCREAM](https://tools.ietf.org/html/draft-ietf-rmcat-scream-cc-07)
-- [Flex FEC draft 3](https://tools.ietf.org/html/draft-ietf-payload-flexible-fec-scheme-03)
 - [RTCP reduced size] (https://tools.ietf.org/html/rfc5506)
 - Bundle only 
 - No simulcast
 
 This is a moving target as new functionalities will be available on Chrome and some others will be removed, we will update our targets appropiatelly.
 
-To enable Flex FEC and VP9 SVC on Chrome Canary you must use the following command line:
+To enable VP9 SVC on Chrome Canary you must use the following command line:
 
 ```
-chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/WebRTC-FlexFEC-03/Enabled
+chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/
 ```
+# End to end encrytpion
+
+A full version of SFrame end to end encryption is under works via insertable streams. Current implementation uses frame counter as IV  which is then inserted in the AES-GCM encrypted frame payload. 
 
 # Install
 
