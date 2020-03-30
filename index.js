@@ -17,6 +17,7 @@ const WebSocketServer = require ('websocket').server;
 const MediaServer = require("medooze-media-server");
 
 //Enable debug
+MediaServer.enableLog(false);
 MediaServer.enableDebug(false);
 MediaServer.enableUltraDebug(false);
 
@@ -150,44 +151,28 @@ ws.on ('request', (request) => {
 
 					//Add listener
 					room.on("participants",(updateParticipants = (participants) => {
-						console.log("room::participants");
 						tm.event("participants", participants);
 					}));
 					
-					//Process the sdp
-					const sdp = SDPInfo.process(data.sdp);
-		
 					//Get all streams before adding us
 					const streams = room.getStreams();
 					
 					//Init participant
-					participant.init(sdp);
+					const answer = participant.init(data.sdp);
 					
-					//For each one
-					for (let stream of streams)
-						//Add it
-						participant.addStream(stream);
-					
-					//Get answer
-					const answer = participant.getLocalSDP();
-
 					//Accept cmd
 					cmd.accept({
-						sdp	: answer.toString(),
+						sdp	: answer,
 						room	: room.getInfo()
 					});
 					
-					//For all remote streams
-					for (let stream of sdp.getStreams().values())
-						//Publish them
-						participant.publishStream(stream);
-					
-					participant.on("renegotiationneeded",(sdp) => {
-						console.log("participant::renegotiationneeded");
+					participant.on("renegotiationneeded",async (sdp) => {
 						//Send update event
-						tm.event('update',{
-							sdp	: sdp.toString()
+						const answer = await tm.cmd('update',{
+							sdp	: sdp
 						});
+						//Update partitipant
+						participant.update(answer.sdp);
 					});
 					
 					//listen for participant events
@@ -197,6 +182,11 @@ ws.on ('request', (request) => {
 						//Remove room listeners
 						room.off("participants",updateParticipants);
 					});
+					
+					//For each one
+					for (let stream of streams)
+						//Add it
+						participant.addStream(stream);
 					
 				} catch (error) {
 					console.error(error);
