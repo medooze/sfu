@@ -25,7 +25,7 @@ chrome.exe --force-fieldtrials=WebRTC-SupportVP9SVC/EnabledByFlag2SL3TL/
 ```
 # End to end encrytpion
 
-A full version of SFrame end to end encryption is under works via insertable streams. Current implementation uses frame counter as IV  which is then inserted in the AES-GCM encrypted frame payload. 
+A full version of SFrame end to end encryption is under works via insertable streams. Current implementation just uses frame counter as IV  which is then inserted in the AES-GCM encrypted frame payload for emoing all required capabilities.
 
 # Install
 
