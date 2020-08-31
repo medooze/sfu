@@ -1,0 +1,3 @@
+[submodule "www/js/sframe"]
+	path = www/js/sframe
+	url = https://github.com/medooze/sframe.git

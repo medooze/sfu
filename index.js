@@ -17,7 +17,7 @@ const WebSocketServer = require ('websocket').server;
 const MediaServer = require("medooze-media-server");
 
 //Enable debug
-MediaServer.enableLog(false);
+MediaServer.enableLog(true);
 MediaServer.enableDebug(false);
 MediaServer.enableUltraDebug(false);
 
@@ -143,7 +143,7 @@ ws.on ('request', (request) => {
 						return cmd.reject("Already joined");
 
 					//Create it
-					participant = room.createParticipant(data.name);
+					participant = room.createParticipant(data.name,data.userData);
 					
 					//Check
 					if (!participant)
@@ -163,7 +163,8 @@ ws.on ('request', (request) => {
 					//Accept cmd
 					cmd.accept({
 						sdp	: answer,
-						room	: room.getInfo()
+						room	: room.getInfo(),
+						partId	: participant.getId()
 					});
 					
 					participant.on("renegotiationneeded",async (sdp) => {

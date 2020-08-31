@@ -1,4 +1,7 @@
-let participants;
+import {SFrame}	from "./sframe/Client.js";
+import {Utils}	from "./sframe/lib/Utils.js";
+
+let participants = [];
 let audioDeviceId;
 let videoResolution = true;
 
@@ -140,7 +143,7 @@ async function getRoomKey(roomId,secret)
 			hash: "SHA-256"
 		},
 		keyMaterial,
-		{"name": "AES-GCM", "length": 256},
+		{"name": "AES-CTR", "length": 256},
 		true,
 		["encrypt", "decrypt"]
 	);
@@ -151,85 +154,41 @@ async function getRoomKey(roomId,secret)
    */
 async function connect(url,roomId,name,secret) 
 {
-	let counter = 0;
+	let sframe;
 	const roomKey = await getRoomKey(roomId,secret);
-	async function encrypt(chunk, controller) {
-		try {
-			//Get iv
-			const iv = new ArrayBuffer(4);
-			//Create view, inc counter and set it
-			new DataView(iv).setUint32(0,counter <65535 ? counter++ : counter=0);
-			//Encrypt
-			const ciphertext = await window.crypto.subtle.encrypt(
-				{
-					name: "AES-GCM",
-					iv: iv
-				},
-				roomKey,
-				chunk.data
-			);
-			//Set chunk data
-			chunk.data = new ArrayBuffer(ciphertext.byteLength + 4);
-			//Crate new encoded data and allocate size for iv
-			const data = new Uint8Array(chunk.data);
-			//Copy iv
-			data.set(new Uint8Array(iv),0);
-			//Copy cipher
-			data.set(new Uint8Array(ciphertext),4);
-			//Write
-			controller.enqueue(chunk);
-		} catch(e) {
-		}
-	}
-
-	async function decrypt(chunk, controller) {
-		try {
-			//decrypt
-			chunk.data =  await window.crypto.subtle.decrypt(
-				{
-				  name: "AES-GCM",
-				  iv: new Uint8Array(chunk.data,0,4)
-				},
-				roomKey,
-				new Uint8Array(chunk.data,4,chunk.data.byteLength - 4)
-			);
-			//Write
-			controller.enqueue(chunk);
-		} catch(e) {
-		}
-	}
-	
+	const keyPair = await window.crypto.subtle.generateKey (
+		{
+			name: "ECDSA",
+			namedCurve: "P-521"
+		},
+		true,
+		["sign", "verify"]
+	);
+	const privateKey = keyPair.privateKey;
+	const publicKey = Utils.toHex(await crypto.subtle.exportKey("raw", keyPair.publicKey));
+	console.log(publicKey);
 	const isCryptoEnabled = !!secret && supportsInsertableStreams;
 
-	var pc = new RTCPeerConnection({
+	let pc = new RTCPeerConnection({
 		bundlePolicy				: "max-bundle",
 		rtcpMuxPolicy				: "require",
-		forceEncodedVideoInsertableStreams	: isCryptoEnabled
+		forceEncodedVideoInsertableStreams	: isCryptoEnabled,
+		forceEncodedAudioInsertableStreams	: isCryptoEnabled,
+		forceEncodedInsertableStreams		: isCryptoEnabled
 	});
 	
 	//Create room url
 	const roomUrl = url +"?id="+roomId;
 		
-	var ws = new WebSocket(roomUrl);
-	var tm = new TransactionManager(ws);
+	let ws = new WebSocket(roomUrl);
+	let tm = new TransactionManager(ws);
+	
 	
 	pc.ontrack = (event) => {
 		//If encrypting/decrypting
 		if (isCryptoEnabled) 
-		{
-			//Create transfor strem fro decrypting
-			const transform = new TransformStream({
-				start() {},
-				flush() {},
-				transform: decrypt
-			});
-			//Get the receiver streams for track
-			let receiverStreams = event.receiver.createEncodedVideoStreams();
-			//Decrytp
-			receiverStreams.readableStream
-				.pipeThrough(transform)
-				.pipeTo(receiverStreams.writableStream);
-		}
+			//decyprt
+			sframe.decrypt(event.transceiver.mid, event.receiver);
 		addRemoteTrack(event);
 	};
 	
@@ -254,26 +213,8 @@ async function connect(url,roomId,name,secret)
 				addLocalVideoForStream(stream,true);
 				//Add stream to peer connection
 				for (const track of stream.getTracks())
-				{
 					//Add track
-					const sender = pc.addTrack(track,stream);
-					//If encrypting/decrypting
-					if (isCryptoEnabled) 
-					{
-						//Get insertable streams
-						const senderStreams = sender.createEncodedVideoStreams();
-						//Create transform stream for encryption
-						let senderTransformStream = new TransformStream({
-							start() {},
-							flush() {},
-							transform: encrypt
-						});
-						//Encrypt
-						senderStreams.readableStream
-						    .pipeThrough(senderTransformStream)
-						    .pipeTo(senderStreams.writableStream);
-					}
-  				}
+					 pc.addTrack(track,stream);
 			 }
 			
 			//Create new offer
@@ -292,10 +233,27 @@ async function connect(url,roomId,name,secret)
 			//Join room
 			const joined = await tm.cmd("join",{
 				name	: name,
-				sdp	: offer.sdp
+				sdp	: offer.sdp,
+				userData: {
+					publicKey : publicKey
+				}
 			});
 			
 			console.log("cmd::join success",joined);
+			
+			//If crypto is enabled
+			if (isCryptoEnabled)
+			{
+				//Create sframe client
+				sframe = await SFrame.createClient(joined.partId);
+				//Add keys
+				sframe.setSenderEncryptionKey(roomKey);
+				//sframe.setSenderSigningKey(privateKey);
+				//For each sender
+				for (const transceiver of pc.getTransceivers ())
+					//Encrypt it
+					sframe.encrypt(transceiver.mid, transceiver.sender);
+			}
 			
 			//Create answer
 			const answer = new RTCSessionDescription({
@@ -363,8 +321,36 @@ async function connect(url,roomId,name,secret)
 		switch (event.name)
 		{
 			case "participants" :
+				//If crypto is enabled
+				if (isCryptoEnabled)
+				{
+					//Getold ids 
+					const oldIds = participants.map(p=>p.id);
+					//get new ids
+					const newIds = event.data.map(p=>p.id);
+					//For each new participant
+					for (const participant of event.data)
+					{
+						//If it is added
+						if (!oldIds.includes(participant.id))
+						{
+							//Add new recevier
+							sframe.addReceiver(participant.id);
+							//Add keys
+							sframe.setRecieverEncryptionKey(participant.id, roomKey);
+							//if (participant.userData) sframe.setRecieverEncryptionKey(participant.id, participant.userData.publicKey);
+						}
+					}
+					
+					//For each old participant
+					for (const participant of participants)
+						//If it is removed
+						if (!newIds.includes(participant.id))
+							//Remove recevier
+							sframe.deleteReceiver(participant.id);
+				}
 				//update participant list
-				participants = event.participants;
+				participants = event.data;
 				break;	
 		}
 	});
@@ -380,7 +366,7 @@ navigator.mediaDevices.getUserMedia({
 	audio_devices.value = stream.getAudioTracks()[0].label;
 	
 	//Get the select
-	var menu = document.getElementById("audio_devices_menu");
+	let menu = document.getElementById("audio_devices_menu");
 	
 	//Populate the device lists
 	navigator.mediaDevices.enumerateDevices()
@@ -392,7 +378,7 @@ navigator.mediaDevices.getUserMedia({
 				if (device.kind==="audioinput")
 				{
 					//Create menu item
-					var li = document.createElement("li");
+					let li = document.createElement("li");
 					//Populate
 					li.dataset["val"] = device.deviceId;	
 					li.innerText = device.label;
@@ -430,13 +416,13 @@ navigator.mediaDevices.getUserMedia({
 			console.log(error);
 		});
 	
-	var fps = 20;
-	var now;
-	var then = Date.now();
-	var interval = 1000/fps;
-	var delta;
-	var drawTimer;
-	var soundMeter = new SoundMeter(window);
+	let fps = 20;
+	let now;
+	let then = Date.now();
+	let interval = 1000/fps;
+	let delta;
+	let drawTimer;
+	let soundMeter = new SoundMeter(window);
 	//Stop
 	cancelAnimationFrame(drawTimer);
 
@@ -448,7 +434,7 @@ navigator.mediaDevices.getUserMedia({
 
 		if (delta > interval) {
 			then = now ;
-			var tot = Math.min(100,(soundMeter.instant*200));
+			let tot = Math.min(100,(soundMeter.instant*200));
 			//Get all 
 			const voometers = document.querySelectorAll (".voometer");
 			//Set new size
@@ -459,7 +445,7 @@ navigator.mediaDevices.getUserMedia({
 	}
 	soundMeter.connectToSource(stream).then(draw);
 	
-	var dialog = document.querySelector('dialog');
+	let dialog = document.querySelector('dialog');
 	dialog.showModal();
 	if (!supportsInsertableStreams)
 		dialog.querySelector('#key').parentElement.innerHTML = "<red>Your browser does not support insertable streams<red>";
@@ -472,18 +458,20 @@ navigator.mediaDevices.getUserMedia({
 	dialog.querySelector('#random').addEventListener('click', function() {
 		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
 		dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
-		dialog.querySelector('#key').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+		dialog.querySelector('#key') && dialog.querySelector('#key').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
 	});
 	dialog.querySelector('form').addEventListener('submit', function(event) {
 		dialog.close();
-		var a = document.querySelector(".room-info a");
+		let a = document.querySelector(".room-info a");
 		a.target = "_blank";
 		a.href = "?roomId="+this.roomId.value;
-		if (this.key.value)
-			a.href += "&key="+encodeURI(this.key.value);
+		//Get key
+		const key = this.key ? this.key.value : null;
+		if (key)
+			a.href += "&key="+encodeURI(key);
 		a.innerText = this.roomId.value;
 		a.parentElement.style.opacity = 1;
-		connect(url, this.roomId.value, this.name.value,this.key.value);
+		connect(url, this.roomId.value, this.name.value,key);
 		event.preventDefault();
 	});
 });
