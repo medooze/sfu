@@ -152,8 +152,9 @@ function proccessRequest(request)
 
 					//Accept cmd
 					cmd.accept({
-						sdp	: answer.toString(),
-						room	: room.getInfo()
+						sdp		: answer.toString(),
+						room		: room.getInfo(),
+						streams		: participant.getOutgoingStreamsMapping() 
 					});
 					
 					//For all remote streams
