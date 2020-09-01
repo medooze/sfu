@@ -5,6 +5,7 @@ const HTTPS			= require("https");
 const Path			= require("path");
 const WebSocketServer		= require("websocket").server;
 const TransactionManager	= require("transaction-manager");
+const Logger			= require("./lib/Logger");
 const Room			= require("./lib/Room");
 //Get Semantic SDP objects
 const SemanticSDP		= require("semantic-sdp");
@@ -17,6 +18,7 @@ const letsencrypt = true;
 const MediaServer = require("medooze-media-server");
 
 //Enable debug
+MediaServer.enableLog(false);
 MediaServer.enableDebug(false);
 MediaServer.enableUltraDebug(false);
 
@@ -71,6 +73,8 @@ rest.post("/whip/:roomId" , (req, res)=>{
 
 rest.use(Express.static("www"));
 
+let maxId = 0;
+
 //Listen for ws requests
 function proccessRequest(request) 
 {
@@ -89,6 +93,10 @@ function proccessRequest(request)
 		room = new Room(url.query.id,ip);
 		//Append to room list
 		rooms.set(room.getId(), room);
+		//Remove on stopperd
+		room.on("stopped",()=>{
+			rooms.delete(room.getId());
+		});
 	}
 	
 	//Get protocol
@@ -99,12 +107,20 @@ function proccessRequest(request)
 	
 	//Create new transaction manager
 	const tm = new TransactionManager(connection);
+	
+	//Create client id
+	const connectionId = maxId++;
+	
+	//Create loger
+	const logger = new Logger("connection["+connectionId+"]");
 
 	//Handle incoming commands
 	tm.on("cmd", async function(cmd) 
 	{
 		//Get command data
 		const data = cmd.data;
+		//Log
+		logger.debug("cmd::" + cmd.name);
 		//check command type
 		switch(cmd.name)
 		{
@@ -123,7 +139,7 @@ function proccessRequest(request)
 
 					//Add listener
 					room.on("participants",(updateParticipants = (participants) => {
-						console.log("room::participants");
+						logger.debug("room::participants");
 						tm.event("participants", {
 							participants	: participants,
 							streams		: participant.getOutgoingStreamsMapping() 
@@ -132,7 +148,7 @@ function proccessRequest(request)
 					
 					//Add listener
 					room.on("publications",(updatePublications = (publications) => {
-						console.log("room::publicastions");
+						logger.debug("room::publicastions");
 						tm.event("publications", {
 							publications	: publications,
 							streams		: participant.getOutgoingStreamsMapping() 
@@ -169,7 +185,7 @@ function proccessRequest(request)
 						participant.publishStream(stream);
 					
 					participant.on("renegotiationneeded",(sdp) => {
-						console.log("participant::renegotiationneeded");
+						logger.debug("participant::renegotiationneeded");
 						//Send update event
 						tm.event("update",{
 							sdp		: sdp.toString(),
@@ -178,7 +194,7 @@ function proccessRequest(request)
 					});
 					
 					//listen for participant events
-					participant.on("closed",function(){
+					participant.on("stopped",function(){
 						//close ws
 						connection.close();
 						//Remove room listeners
@@ -198,7 +214,7 @@ function proccessRequest(request)
 	});
 
 	connection.on("close", function(){
-		console.log("connection:onclose");
+		logger.info("connection:onclose");
 		//Check if we had a participant
 		if (participant)
 			//remove it
