@@ -65,9 +65,28 @@ function addVideoForStream(stream,muted)
 		video.controls = true;
 		//Append it to publications
 		document.getElementById("publications-container").appendChild(video);
+	} else if (stream.participant) {
+		//Create contaner div
+		const div = document.createElement("div");
+		div.classList = "participant local";
+		//Create name div
+		const name = document.createElement("div");
+		name.classList = "name";
+		name.innerText = stream.participant.name;
+		//Add video to container
+		div.appendChild(video);
+		div.appendChild(name)
+		//Add to video element contanier
+		document.getElementById("container").appendChild(div);
+		
 	} else {
-		//Remove it from publications
-		document.getElementById("container").appendChild(video);
+		//Create contaner div
+		const div = document.createElement("div");
+		div.classList = "participant remote";
+		//Add video to container
+		div.appendChild(video);
+		//Add to video element contanier
+		document.getElementById("container").appendChild(div);
 	}
 }
 
@@ -79,8 +98,16 @@ function removeVideoForStream(stream)
 	video.addEventListener("webkitTransitionEnd",function(){
 		//If not deleted yet
 		if (video.parentElement)
-			//Delete it
-			video.parentElement.removeChild(video);
+		{
+			//If it was a participant
+			if (video.parentElement.classList.contains("participant"))
+				//Delete it too
+				video.parentElement.parentElement.removeChild(video.parentElement);
+			else 
+				//Delete it
+				video.parentElement.removeChild(video);
+			
+		}
         });
 	//Disable it first
 	video.className = "disabled";
