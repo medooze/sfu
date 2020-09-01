@@ -9,7 +9,7 @@
     "express": "^4.17.1",
     "greenlock-express": "^4.0.3",
     "medooze-media-server": "^0",
-    "semantic-sdp": "^3",
+    "semantic-sdp": "^3.19.1",
     "transaction-manager": "^2",
     "websocket": "^1.0.24"
   },
