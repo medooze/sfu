@@ -177,6 +177,10 @@ function connect(url,roomId,name)
 			
 			console.log("cmd::join success",joined);
 			
+			//update participant list
+			participants = joined.room.participant;
+			publications = joined.room.publicastions;
+			
 			//Create answer
 			const answer = new RTCSessionDescription({
 				type	:'answer',
