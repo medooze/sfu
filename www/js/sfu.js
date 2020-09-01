@@ -94,37 +94,36 @@ function updateStreamMappings(mappings)
 		//Try to see if it is a parcitipant
 		const participant = participants.find(participant => participant.id==partId);
 		
-		//If it has no streasm
-		if (!participant.streams)
-			//Create it
-			participant.streams = [];
 
 		//if found
 		if (participant)
 		{
+			//If it has no streasm
+			if (!participant.streams)
+				//Create it
+				participant.streams = [];
 			//If stream is from the participant
 			if (!participant.streams.includes(streamId))
 				//Add it
 				participant.streams.push(streamId);
-			break;
-		}
-		
-		//Try to see if it is a publication
-		const publication = publications.find(publication => publication.id==partId);
-		
-		//If it has no streasm
-		if (!publication.streams)
-			//Create it
-			publication.streams = [];
+		} else {
+			
+			//Try to see if it is a publication
+			const publication = publications.find(publication => publication.id==partId);
+			
 
-		//if found
-		if (publication)
-		{
-			//If stream is from the participant
-			if (!publication.streams.includes(streamId))
-				//Add it
-				publication.streams.push(streamId);
-			break;
+			//if found
+			if (publication)
+			{
+				//If it has no streasm
+				if (!publication.streams)
+					//Create it
+					publication.streams = [];
+				//If stream is from the participant
+				if (!publication.streams.includes(streamId))
+					//Add it
+					publication.streams.push(streamId);
+			}
 		}
 	}
 }
@@ -160,14 +159,18 @@ function connect(url,roomId,name)
 				break;
 			}
 		}
-		//Try to see if it is a publication
-		for (const publication of publications)
+		//If it is not a participant
+		if (!event.streams[0].participant)
 		{
-			//If stream is from the participant
-			if (publication.streams && publication.streams.includes(event.streams[0].id))
+			//Try to see if it is a publication
+			for (const publication of publications)
 			{
-				event.streams[0].publication = publication;
-				break;
+				//If stream is from the participant
+				if (publication.streams && publication.streams.includes(event.streams[0].id))
+				{
+					event.streams[0].publication = publication;
+					break;
+				}
 			}
 		}
 		//Play it
