@@ -178,7 +178,7 @@ function connect(url,roomId,name)
 			console.log("cmd::join success",joined);
 			
 			//update participant list
-			participants = joined.room.participant;
+			participants = joined.room.participants;
 			publications = joined.room.publications;
 			
 			//Create answer
