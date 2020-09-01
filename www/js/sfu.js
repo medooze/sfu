@@ -1,4 +1,5 @@
-let participants;
+let participants = [];
+let publications = [];
 let audioDeviceId;
 let videoResolution = true;
 
@@ -57,18 +58,25 @@ function addVideoForStream(stream,muted)
 	//Set other properties
 	video.autoplay = true;
 	video.muted = muted;
-	//Append it
-	container.appendChild(video);
+	
+	if (stream.publication)
+		//Append it to publications
+		document.getElementById("publications-container").appendChild(video);
+	else
+		//Remove it from publications
+		document.getElementById("container").appendChild(video);
 }
 
 function removeVideoForStream(stream)
 {
 	//Get video
 	var video = document.getElementById(stream.id);
-	//Remove it when done
+	//Remove it when done (it may fire more than once, 1 per transition)
 	video.addEventListener('webkitTransitionEnd',function(){
-            //Delete it
-	    video.parentElement.removeChild(video);
+		//If not deleted yet
+		if (video.parentElement)
+			//Delete it
+			video.parentElement.removeChild(video);
         });
 	//Disable it first
 	video.className = "disabled";
@@ -89,17 +97,41 @@ function connect(url,roomId,name)
 	var ws = new WebSocket(roomUrl);
 	var tm = new TransactionManager(ws);
 	
-	pc.onaddstream = function(event) {
-		console.debug("pc::onAddStream",event);
+	pc.ontrack = function(event) {
+		console.debug("pc::ontrack",event);
+		//Check it is video track
+		if (event.track.kind!="video")
+			//Done
+			return;
+		//Try to see if it is a parcitipant
+		for (const participant of participants)
+		{
+			//If stream is from the participant
+			if (participant.streams.includes(event.streams[0].id))
+			{
+				event.streams[0].participant = participant;
+				break;
+			}
+		}
+		//Try to see if it is a publication
+		for (const publication of publications)
+		{
+			//If stream is from the participant
+			if (publication.streams.includes(event.streams[0].id))
+			{
+				event.streams[0].publication = publication;
+				break;
+			}
+		}
 		//Play it
-		addVideoForStream(event.stream);
+		addVideoForStream(event.streams[0]);
+		//When stopped
+		event.track.onended = ()=>{
+			//Remove video element
+			removeVideoForStream(event.streams[0]);
+		};
 	};
 	
-	pc.onremovestream = function(event) {
-		console.debug("pc::onRemoveStream",event);
-		//Play it
-		removeVideoForStream(event.stream);
-	};
 	
 	ws.onopen = async function()
 	{
@@ -179,9 +211,6 @@ function connect(url,roomId,name)
 						sdp  : event.data.sdp
 					});
 					
-					//update participant list
-					participants = event.participants;
-					
 					//Set offer
 					await pc.setRemoteDescription(offer);
 					
@@ -204,7 +233,11 @@ function connect(url,roomId,name)
 				break;
 			case "participants" :
 				//update participant list
-				participants = event.participants;
+				participants = event.data;
+				break;
+			case "publications" :
+				//update participant list
+				publications = event.data;
 				break;	
 		}
 	});
@@ -303,7 +336,11 @@ navigator.mediaDevices.getUserMedia({
 	dialog.showModal();
 	if (roomId)
 	{
-		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+		//Check if component has already loaded
+		if (dialog.querySelector('#roomId').parentElement.MaterialTextfield) 
+			dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+		else 
+			dialog.querySelector('#roomId').value = roomId;
 		dialog.querySelector('#name').focus();
 	}
 	dialog.querySelector('#random').addEventListener('click', function() {

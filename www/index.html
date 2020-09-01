@@ -142,7 +142,7 @@
 			background-color: rgba(255, 255, 255, 0.8);
 		}
 
-		video {
+		#container video {
 			object-fit: cover;
 			float: left;
 			background: #fff;
@@ -159,24 +159,30 @@
 			opacity: 1;
 		}
 		
+		#publications-container video {
+			height: 100%;
+			object-fit: contain;
+			background: white;
+			border-radius: 2px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+			padding: 1px;
+			opacity: 1;
+		}
+
+		
 		.disabled {
-			height: 0px;
-			opacity: 0;
+			height: 0px !important;
+			opacity: 0  !important;
 		}
 		
-		video:hover {
+		#container video:hover {
 			box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 			bottom: 125px;
 			height: 300px;
 			max-width: 400px;
 		}
-		video::before {
-			content: "hola";
-		}
-		video::after {
-			content: "hola";
-		}
-
+		
+		 		
 		#outher-container {
 			margin: 0px;
 			padding: 0px;
@@ -277,13 +283,22 @@
 		a {
 			text-decoration: none !important;
 		}
-		
+		#publications-container
+		{
+			position: absolute;
+			top: 75px;
+			left: 15px;
+			bottom: 200;
+			right: 15px;
+		}
 	</style>
 	</head>
 	<body>
 	<div id="outher-container" class="scroll">
 		<div class="room-header">
 			<div class="room-info"> Room: <a href="" id="room-id"></a></div>
+		</div>
+		<div id="publications-container">
 		</div>
 		<div id="container">
 			<dialog class="ready-dialog mdl-dialog">
