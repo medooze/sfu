@@ -205,7 +205,7 @@ function connect(url,roomId,name)
 				{
 					console.log(event.data.sdp);
 					//Get streams
-					const mappings = event.data.sdp;
+					const mappings = event.data.streams;
 					
 					//For each mapping
 					for (const [streamId,partId] of mappings)
