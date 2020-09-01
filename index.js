@@ -11,7 +11,7 @@ const SemanticSDP		= require("semantic-sdp");
 const SDPInfo			= SemanticSDP.SDPInfo;
 
 const PORT = 8084;
-const letsencrypt = false;
+const letsencrypt = true;
 
 //Get the Medooze Media Server interface
 const MediaServer = require("medooze-media-server");
@@ -42,7 +42,7 @@ rest.post("/whip/:roomId" , (req, res)=>{
 	//Get body
 	const body = req.body;
 	//Get streamId
-	const roomId = req.params.streamId;
+	const roomId = req.params.roomId;
 	//Get room
 	const room = rooms.get(roomId);
 	
@@ -217,7 +217,7 @@ if (letsencrypt)
 	const gle = require("greenlock-express").init({
 			packageRoot: __dirname,
 			configDir: "./greenlock.d",
-			maintainerEmail: Package.author,
+			maintainerEmail : "sergio.garcia.murillo@gmail.com",
 			cluster: false
 		});
 	gle.ready((gle)=>wss(gle.httpsServer()));
