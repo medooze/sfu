@@ -179,7 +179,7 @@ function connect(url,roomId,name)
 			
 			//update participant list
 			participants = joined.room.participant;
-			publications = joined.room.publicastions;
+			publications = joined.room.publications;
 			
 			//Create answer
 			const answer = new RTCSessionDescription({
