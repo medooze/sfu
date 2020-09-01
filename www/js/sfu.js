@@ -93,6 +93,11 @@ function updateStreamMappings(mappings)
 	{
 		//Try to see if it is a parcitipant
 		const participant = participants.find(participant => participant.id==partId);
+		
+		//If it has no streasm
+		if (!participant.streams)
+			//Create it
+			participant.streams = [];
 
 		//if found
 		if (participant)
@@ -106,6 +111,11 @@ function updateStreamMappings(mappings)
 		
 		//Try to see if it is a publication
 		const publication = publications.find(publication => publication.id==partId);
+		
+		//If it has no streasm
+		if (!publication.streams)
+			//Create it
+			publication.streams = [];
 
 		//if found
 		if (publication)
@@ -144,7 +154,7 @@ function connect(url,roomId,name)
 		for (const participant of participants)
 		{
 			//If stream is from the participant
-			if (participant.streams.includes(event.streams[0].id))
+			if (participant.streams && participant.streams.includes(event.streams[0].id))
 			{
 				event.streams[0].participant = participant;
 				break;
@@ -154,7 +164,7 @@ function connect(url,roomId,name)
 		for (const publication of publications)
 		{
 			//If stream is from the participant
-			if (publication.streams.includes(event.streams[0].id))
+			if (publication.streams && publication.streams.includes(event.streams[0].id))
 			{
 				event.streams[0].publication = publication;
 				break;
