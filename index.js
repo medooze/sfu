@@ -124,13 +124,19 @@ function proccessRequest(request)
 					//Add listener
 					room.on("participants",(updateParticipants = (participants) => {
 						console.log("room::participants");
-						tm.event("participants", participants);
+						tm.event("participants", {
+							participants	: participants,
+							streams		: participant.getOutgoingStreamsMapping() 
+						});
 					}));
 					
 					//Add listener
 					room.on("publications",(updatePublications = (publications) => {
 						console.log("room::publicastions");
-						tm.event("publications", publications);
+						tm.event("publications", {
+							publications	: publications,
+							streams		: participant.getOutgoingStreamsMapping() 
+						});
 					}));
 					
 					//Process the sdp
@@ -162,12 +168,12 @@ function proccessRequest(request)
 						//Publish them
 						participant.publishStream(stream);
 					
-					participant.on("renegotiationneeded",(sdp,streams) => {
+					participant.on("renegotiationneeded",(sdp) => {
 						console.log("participant::renegotiationneeded");
 						//Send update event
 						tm.event("update",{
-							sdp	: sdp.toString(),
-							streams : streams
+							sdp		: sdp.toString(),
+							streams		: participant.getOutgoingStreamsMapping() 
 						});
 					});
 					

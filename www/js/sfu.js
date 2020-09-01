@@ -60,11 +60,15 @@ function addVideoForStream(stream,muted)
 	video.muted = muted;
 	
 	if (stream.publication)
+	{
+		//Show controls
+		video.controls = true;
 		//Append it to publications
 		document.getElementById("publications-container").appendChild(video);
-	else
+	} else {
 		//Remove it from publications
 		document.getElementById("container").appendChild(video);
+	}
 }
 
 function removeVideoForStream(stream)
@@ -72,7 +76,7 @@ function removeVideoForStream(stream)
 	//Get video
 	var video = document.getElementById(stream.id);
 	//Remove it when done (it may fire more than once, 1 per transition)
-	video.addEventListener('webkitTransitionEnd',function(){
+	video.addEventListener("webkitTransitionEnd",function(){
 		//If not deleted yet
 		if (video.parentElement)
 			//Delete it
@@ -80,6 +84,39 @@ function removeVideoForStream(stream)
         });
 	//Disable it first
 	video.className = "disabled";
+}
+
+function updateStreamMappings(mappings)
+{
+	//For each mapping
+	for (const [streamId,partId] of mappings)
+	{
+		//Try to see if it is a parcitipant
+		const participant = participants.find(participant => participant.id==partId);
+
+		//if found
+		if (participant)
+		{
+			//If stream is from the participant
+			if (!participant.streams.includes(streamId))
+				//Add it
+				participant.streams.push(streamId);
+			break;
+		}
+		
+		//Try to see if it is a publication
+		const publication = publications.find(publication => publication.id==partId);
+
+		//if found
+		if (publication)
+		{
+			//If stream is from the participant
+			if (!publication.streams.includes(streamId))
+				//Add it
+				publication.streams.push(streamId);
+			break;
+		}
+	}
 }
 
 function connect(url,roomId,name) 
@@ -181,40 +218,12 @@ function connect(url,roomId,name)
 			participants = joined.room.participants;
 			publications = joined.room.publications;
 			
-			//Get streams
-			const mappings = joined.streams;
-
-			//For each mapping
-			for (const [streamId,partId] of mappings)
-			{
-				//Try to see if it is a parcitipant
-				const participant = participants.find(participant => participant.id==partId);
-
-				//if found
-				if (participant)
-				{
-					//If stream is from the participant
-					if (!participant.streams.includes(streamId))
-						//Add it
-						participant.streams.push(streamId);
-					break;
-				}
-				//Try to see if it is a publication
-				const publication = publications.find(publication => publication.id==partId);
-
-				//if found
-				if (publication)
-				{
-					//If stream is from the participant
-					if (!publication.streams.includes(streamId))
-						//Add it
-						publication.streams.push(streamId);
-					break;
-				}
-			}
+			//Update stream mappings
+			updateStreamMappings(joined.streams);
+			
 			//Create answer
 			const answer = new RTCSessionDescription({
-				type	:'answer',
+				type	: "answer",
 				sdp	: joined.sdp
 			});
 			
@@ -239,40 +248,13 @@ function connect(url,roomId,name)
 				try
 				{
 					console.log(event.data.sdp);
-					//Get streams
-					const mappings = event.data.streams;
 					
-					//For each mapping
-					for (const [streamId,partId] of mappings)
-					{
-						//Try to see if it is a parcitipant
-						const participant = participants.find(participant => participant.id==partId);
-						
-						//if found
-						if (participant)
-						{
-							//If stream is from the participant
-							if (!participant.streams.includes(streamId))
-								//Add it
-								participant.streams.push(streamId);
-							break;
-						}
-						//Try to see if it is a publication
-						const publication = publications.find(publication => publication.id==partId);
-						
-						//if found
-						if (publication)
-						{
-							//If stream is from the participant
-							if (!publication.streams.includes(streamId))
-								//Add it
-								publication.streams.push(streamId);
-							break;
-						}
-					}
+					//Update stream mappings
+					updateStreamMappings(event.data.streams);
+			
 					//Create new offer
 					const offer = new RTCSessionDescription({
-						type : 'offer',
+						type : "offer",
 						sdp  : event.data.sdp
 					});
 					
@@ -298,11 +280,15 @@ function connect(url,roomId,name)
 				break;
 			case "participants" :
 				//update participant list
-				participants = event.data;
+				participants = event.data.participants;
+				//Update stream mappings
+				updateStreamMappings(event.data.streams);
 				break;
 			case "publications" :
 				//update participant list
-				publications = event.data;
+				publications = event.data.publications;
+				//Update stream mappings
+				updateStreamMappings(event.data.streams);
 				break;	
 		}
 	});
@@ -337,7 +323,7 @@ navigator.mediaDevices.getUserMedia({
 					li.className = "mdl-menu__item";
 					
 					//Add listener
-					li.addEventListener('click', function() {
+					li.addEventListener("click", function() {
 						console.log(device.deviceId);
 						//Close previous
 						stream.getAudioTracks()[0].stop();
@@ -361,7 +347,7 @@ navigator.mediaDevices.getUserMedia({
 				}
 			});
 			//Upgrade
-			getmdlSelect.init('.getmdl-select');
+			getmdlSelect.init(".getmdl-select");
 		        componentHandler.upgradeDom();
 		})
 		.catch(function(error){
@@ -397,22 +383,22 @@ navigator.mediaDevices.getUserMedia({
 	}
 	soundMeter.connectToSource(stream).then(draw);
 	
-	var dialog = document.querySelector('dialog');
+	var dialog = document.querySelector("dialog");
 	dialog.showModal();
 	if (roomId)
 	{
 		//Check if component has already loaded
-		if (dialog.querySelector('#roomId').parentElement.MaterialTextfield) 
-			dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(roomId);
+		if (dialog.querySelector("#roomId").parentElement.MaterialTextfield) 
+			dialog.querySelector("#roomId").parentElement.MaterialTextfield.change(roomId);
 		else 
-			dialog.querySelector('#roomId').value = roomId;
-		dialog.querySelector('#name').focus();
+			dialog.querySelector("#roomId").value = roomId;
+		dialog.querySelector("#name").focus();
 	}
-	dialog.querySelector('#random').addEventListener('click', function() {
-		dialog.querySelector('#roomId').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
-		dialog.querySelector('#name').parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+	dialog.querySelector("#random").addEventListener("click", function() {
+		dialog.querySelector("#roomId").parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
+		dialog.querySelector("#name").parentElement.MaterialTextfield.change(Math.random().toString(36).substring(7));
 	});
-	dialog.querySelector('form').addEventListener('submit', function(event) {
+	dialog.querySelector("form").addEventListener("submit", function(event) {
 		dialog.close();
 		var a = document.querySelector(".room-info a");
 		a.target = "_blank";
