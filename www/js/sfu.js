@@ -15,7 +15,8 @@ const nopublish = href.searchParams.has("nopublish");
 //Get ws url from navigaro url
 const url = "wss://"+href.host;
 //Check support for insertabe media streams
-const supportsInsertableStreams = !!RTCRtpSender.prototype.createEncodedVideoStreams;
+// In Chrome v98 is "RTCRtpSender.prototype.createEncodedStreams"
+const supportsInsertableStreams = !!RTCRtpSender.prototype.createEncodedVideoStreams || !!RTCRtpSender.prototype.createEncodedStreams;
 
 if (href.searchParams.has ("video"))
 	switch (href.searchParams.get ("video").toLowerCase ())
